@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Fond 100% noir opaque sans aucun arrondi pour une coupure parfaite -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/car_dock_bg" />
+        </shape>
+    </item>
+    <!-- Ligne de séparation supérieure nette de 1px -->
+    <item android:gravity="top">
+        <shape android:shape="rectangle">
+            <size android:height="1dp" />
+            <solid android:color="@color/car_border_dark" />
+        </shape>
+    </item>
+</layer-list>

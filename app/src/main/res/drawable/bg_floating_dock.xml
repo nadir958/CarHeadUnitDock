@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <!-- Fond noir profond élégant style cockpit automobile -->
+    <solid android:color="#F2090D16" />
+    <corners android:radius="24dp" />
+    <stroke
+        android:width="1.5dp"
+        android:color="#334155" />
+</shape>

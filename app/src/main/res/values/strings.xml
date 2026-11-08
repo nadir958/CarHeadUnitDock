@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Car HeadUnit Dock</string>
+    <string name="accessibility_service_desc">Permet à la barre de contrôle tactile d\'exécuter les actions Retour et Accueil (Home) sur l\'autoradio.</string>
+    <string name="notification_channel_name">Car Dock Service</string>
+    <string name="notification_channel_desc">Maintient la barre de contrôle active au-dessus des applications et de ZLink.</string>
+    <string name="notification_title">Barre de contrôle active</string>
+    <string name="notification_text">Touchez pour ouvrir les paramètres de la barre.</string>
+</resources>

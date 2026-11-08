@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/car_bg_black"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- En-tête -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Car HeadUnit Dock"
+            android:textColor="@color/car_text_primary"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Barre de contrôle nocturne pour Autoradio Android (ZLink, CarPlay, GPS)"
+            android:textColor="@color/car_text_secondary"
+            android:textSize="13sp" />
+
+        <!-- Carte 1 : Autorisations -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="@color/car_surface_dark"
+            app:cardCornerRadius="16dp"
+            app:strokeColor="@color/car_border_dark"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1. Autorisations Système"
+                    android:textColor="@color/car_accent_amber"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <!-- Permission Overlay -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/txtStatusOverlay"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="• Affichage par-dessus les applications : Non autorisé"
+                        android:textColor="@color/car_text_primary"
+                        android:textSize="13sp" />
+
+                    <Button
+                        android:id="@+id/btnGrantOverlay"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Activer"
+                        android:textColor="@color/car_accent_amber"
+                        app:strokeColor="@color/car_accent_amber" />
+                </LinearLayout>
+
+                <!-- Permission Accessibility -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/txtStatusAccessibility"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="• Service Accessibilité (Retour/Home) : Désactivé"
+                        android:textColor="@color/car_text_primary"
+                        android:textSize="13sp" />
+
+                    <Button
+                        android:id="@+id/btnGrantAccessibility"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Activer"
+                        android:textColor="@color/car_accent_amber"
+                        app:strokeColor="@color/car_accent_amber" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Carte 2 : Choix des 2 Options (Option A vs Option B) -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="@color/car_surface_dark"
+            app:cardCornerRadius="16dp"
+            app:strokeColor="@color/car_border_dark"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2. Configuration de l'Écran (Les 2 Options)"
+                    android:textColor="@color/car_accent_amber"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Choisissez comment la barre s'intègre avec vos applications GPS :"
+                    android:textColor="@color/car_text_secondary"
+                    android:textSize="12sp" />
+
+                <RadioGroup
+                    android:id="@+id/rgIntegrationMode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <!-- OPTION A -->
+                    <RadioButton
+                        android:id="@+id/radioOptionA"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/car_accent_amber"
+                        android:text="Option A : Superposition directe (Plein écran natif)"
+                        android:textColor="@color/car_text_primary"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="32dp"
+                        android:text="La barre s'affiche en bas sans modifier la résolution de l'écran."
+                        android:textColor="@color/car_text_muted"
+                        android:textSize="11sp" />
+
+                    <!-- OPTION B -->
+                    <RadioButton
+                        android:id="@+id/radioOptionB"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:checked="true"
+                        android:buttonTint="@color/car_accent_amber"
+                        android:text="Option B : Redimensionnement d'écran (Display Inset - Zéro masquage)"
+                        android:textColor="@color/car_text_primary"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="32dp"
+                        android:text="L'espace sous l'écran est réservé : Waze, Maps et ZLink s'arrêtent pile au-dessus de la barre sans rien cacher."
+                        android:textColor="@color/car_text_muted"
+                        android:textSize="11sp" />
+                </RadioGroup>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Commandes de démarrage -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnStartDock"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/car_accent_amber"
+                android:text="Activer la Barre"
+                android:textColor="@color/car_bg_black"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnStopDock"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="52dp"
+                android:layout_marginStart="12dp"
+                android:text="Masquer"
+                android:textColor="@color/car_text_primary"
+                app:strokeColor="@color/car_border_dark" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

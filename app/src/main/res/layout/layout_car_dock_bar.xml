@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/floatingDockContainer"
+    android:layout_width="wrap_content"
+    android:layout_height="48dp"
+    android:background="@drawable/bg_floating_dock"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="8dp"
+    android:paddingTop="3dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="3dp">
+
+    <!-- Poignée de déplacement (Glisser pour déplacer l'îlot n'importe où) -->
+    <ImageView
+        android:id="@+id/dragHandle"
+        android:layout_width="22dp"
+        android:layout_height="match_parent"
+        android:contentDescription="Déplacer"
+        android:paddingStart="3dp"
+        android:paddingEnd="3dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_drag_handle" />
+
+    <!-- 1. Bouton RETOUR -->
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="46dp"
+        android:layout_height="match_parent"
+        android:layout_marginStart="4dp"
+        android:background="@drawable/bg_button_night"
+        android:contentDescription="Retour"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_back" />
+
+    <!-- 2. Bouton ACCUEIL (HOME) -->
+    <ImageButton
+        android:id="@+id/btnHome"
+        android:layout_width="46dp"
+        android:layout_height="match_parent"
+        android:layout_marginStart="6dp"
+        android:background="@drawable/bg_button_night"
+        android:contentDescription="Accueil"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_home" />
+
+    <!-- Séparateur vertical fin -->
+    <View
+        android:layout_width="1dp"
+        android:layout_height="22dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:background="#334155" />
+
+    <!-- 3. Bouton SOURDINE (MUTE) -->
+    <ImageButton
+        android:id="@+id/btnMute"
+        android:layout_width="46dp"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_button_night"
+        android:contentDescription="Sourdine"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_mute" />
+
+    <!-- 4. Bouton VOLUME MOINS -->
+    <ImageButton
+        android:id="@+id/btnVolDown"
+        android:layout_width="48dp"
+        android:layout_height="match_parent"
+        android:layout_marginStart="6dp"
+        android:background="@drawable/bg_button_night"
+        android:contentDescription="Volume Moins"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_volume_down" />
+
+    <!-- 5. Bouton VOLUME PLUS (Accentué Ambre Vision Nocturne) -->
+    <ImageButton
+        android:id="@+id/btnVolUp"
+        android:layout_width="56dp"
+        android:layout_height="match_parent"
+        android:layout_marginStart="6dp"
+        android:background="@drawable/bg_button_plus_glow"
+        android:contentDescription="Volume Plus"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_volume_up" />
+
+</LinearLayout>
