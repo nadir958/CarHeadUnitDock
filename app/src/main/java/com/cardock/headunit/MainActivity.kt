@@ -20,9 +20,21 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnGrantOverlay: Button
     private lateinit var txtStatusAccessibility: TextView
     private lateinit var btnGrantAccessibility: Button
+
+    private lateinit var rgMenuOrientation: RadioGroup
+    private lateinit var radioOrientHorizontal: RadioButton
+    private lateinit var radioOrientVertical: RadioButton
+
+    private lateinit var rgButtonSize: RadioGroup
+    private lateinit var radioSizeCompact: RadioButton
+    private lateinit var radioSizeMedium: RadioButton
+    private lateinit var radioSizeLarge: RadioButton
+    private lateinit var radioSizeXLarge: RadioButton
+
     private lateinit var rgIntegrationMode: RadioGroup
     private lateinit var radioOptionA: RadioButton
     private lateinit var radioOptionB: RadioButton
+
     private lateinit var btnStartDock: Button
     private lateinit var btnStopDock: Button
 
@@ -33,6 +45,16 @@ class MainActivity : AppCompatActivity() {
         const val PREF_INTEGRATION_MODE = "integration_mode"
         const val MODE_OPTION_A = "option_a" // Superposition
         const val MODE_OPTION_B = "option_b" // Redimensionnement d'écran
+
+        const val PREF_DOCK_ORIENTATION = "dock_orientation"
+        const val ORIENT_HORIZONTAL = "horizontal"
+        const val ORIENT_VERTICAL = "vertical"
+
+        const val PREF_DOCK_SIZE = "dock_size"
+        const val SIZE_COMPACT = "compact" // 44dp
+        const val SIZE_MEDIUM = "medium"   // 56dp
+        const val SIZE_LARGE = "large"     // 68dp
+        const val SIZE_XLARGE = "xlarge"   // 80dp
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,24 +78,53 @@ class MainActivity : AppCompatActivity() {
         btnGrantOverlay = findViewById(R.id.btnGrantOverlay)
         txtStatusAccessibility = findViewById(R.id.txtStatusAccessibility)
         btnGrantAccessibility = findViewById(R.id.btnGrantAccessibility)
+
+        rgMenuOrientation = findViewById(R.id.rgMenuOrientation)
+        radioOrientHorizontal = findViewById(R.id.radioOrientHorizontal)
+        radioOrientVertical = findViewById(R.id.radioOrientVertical)
+
+        rgButtonSize = findViewById(R.id.rgButtonSize)
+        radioSizeCompact = findViewById(R.id.radioSizeCompact)
+        radioSizeMedium = findViewById(R.id.radioSizeMedium)
+        radioSizeLarge = findViewById(R.id.radioSizeLarge)
+        radioSizeXLarge = findViewById(R.id.radioSizeXLarge)
+
         rgIntegrationMode = findViewById(R.id.rgIntegrationMode)
         radioOptionA = findViewById(R.id.radioOptionA)
         radioOptionB = findViewById(R.id.radioOptionB)
+
         btnStartDock = findViewById(R.id.btnStartDock)
         btnStopDock = findViewById(R.id.btnStopDock)
     }
 
     private fun loadSavedPreferences() {
+        // 1. Format Orientation
+        val orientation = prefs.getString(PREF_DOCK_ORIENTATION, ORIENT_HORIZONTAL)
+        if (orientation == ORIENT_VERTICAL) {
+            rgMenuOrientation.check(R.id.radioOrientVertical)
+        } else {
+            rgMenuOrientation.check(R.id.radioOrientHorizontal)
+        }
+
+        // 2. Taille des boutons
+        when (prefs.getString(PREF_DOCK_SIZE, SIZE_LARGE)) {
+            SIZE_COMPACT -> rgButtonSize.check(R.id.radioSizeCompact)
+            SIZE_MEDIUM -> rgButtonSize.check(R.id.radioSizeMedium)
+            SIZE_XLARGE -> rgButtonSize.check(R.id.radioSizeXLarge)
+            else -> rgButtonSize.check(R.id.radioSizeLarge)
+        }
+
+        // 3. Mode Intégration
         val currentMode = prefs.getString(PREF_INTEGRATION_MODE, MODE_OPTION_B)
         if (currentMode == MODE_OPTION_A) {
-            radioOptionA.isChecked = true
+            rgIntegrationMode.check(R.id.radioOptionA)
         } else {
-            radioOptionB.isChecked = true
+            rgIntegrationMode.check(R.id.radioOptionB)
         }
     }
 
     private fun setupListeners() {
-        // 1. Bouton Permission Superposition (Overlay)
+        // 1. Permission Overlay
         btnGrantOverlay.setOnClickListener {
             val intent = Intent(
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -82,7 +133,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // 2. Bouton Permission Accessibilité (Pour Retour et Home)
+        // 2. Permission Accessibilité
         btnGrantAccessibility.setOnClickListener {
             val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
             startActivity(intent)
@@ -93,7 +144,35 @@ class MainActivity : AppCompatActivity() {
             ).show()
         }
 
-        // 3. Changement de Mode d'intégration (Option A vs Option B)
+        // 3. Format du Menu (Horizontal vs Vertical)
+        rgMenuOrientation.setOnCheckedChangeListener { _, checkedId ->
+            val newOrient = if (checkedId == R.id.radioOrientVertical) ORIENT_VERTICAL else ORIENT_HORIZONTAL
+            prefs.edit().putString(PREF_DOCK_ORIENTATION, newOrient).apply()
+            notifyDockConfigChanged()
+            val label = if (newOrient == ORIENT_VERTICAL) "Vertical (Colonne)" else "Horizontal (Ligne)"
+            Toast.makeText(this, "Format du menu : $label", Toast.LENGTH_SHORT).show()
+        }
+
+        // 4. Taille des boutons (Compact, Medium, Large, XLarge)
+        rgButtonSize.setOnCheckedChangeListener { _, checkedId ->
+            val newSize = when (checkedId) {
+                R.id.radioSizeCompact -> SIZE_COMPACT
+                R.id.radioSizeMedium -> SIZE_MEDIUM
+                R.id.radioSizeXLarge -> SIZE_XLARGE
+                else -> SIZE_LARGE
+            }
+            prefs.edit().putString(PREF_DOCK_SIZE, newSize).apply()
+            notifyDockConfigChanged()
+            val label = when (newSize) {
+                SIZE_COMPACT -> "Compact (44 dp)"
+                SIZE_MEDIUM -> "Standard (56 dp)"
+                SIZE_XLARGE -> "Très Grand (80 dp)"
+                else -> "Grand (68 dp)"
+            }
+            Toast.makeText(this, "Taille des boutons : $label", Toast.LENGTH_SHORT).show()
+        }
+
+        // 5. Mode Intégration
         rgIntegrationMode.setOnCheckedChangeListener { _, checkedId ->
             if (checkedId == R.id.radioOptionA) {
                 prefs.edit().putString(PREF_INTEGRATION_MODE, MODE_OPTION_A).apply()
@@ -108,7 +187,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 4. Démarrer la barre
+        // 6. Démarrer la barre
         btnStartDock.setOnClickListener {
             if (!Settings.canDrawOverlays(this)) {
                 Toast.makeText(this, "Activez d'abord la permission de superposition !", Toast.LENGTH_SHORT).show()
@@ -118,11 +197,24 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Barre activée !", Toast.LENGTH_SHORT).show()
         }
 
-        // 5. Masquer la barre
+        // 7. Masquer la barre
         btnStopDock.setOnClickListener {
             val intent = Intent(this, CarDockOverlayService::class.java)
             stopService(intent)
             Toast.makeText(this, "Barre masquée", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun notifyDockConfigChanged() {
+        if (CarDockOverlayService.isServiceRunning) {
+            val intent = Intent(this, CarDockOverlayService::class.java).apply {
+                action = CarDockOverlayService.ACTION_UPDATE_CONFIG
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
         }
     }
 

@@ -1,44 +1,51 @@
-# Car HeadUnit Dock (Pour autoradio Android & ZLink)
+# Car HeadUnit Dock (Pour autoradio & tablette Android Voiture)
 
-Application conçue spécialement pour autoradios Android avec support complet de **ZLink / Android Auto**.
-Elle ajoute une barre de contrôle nocturne permanente tout en bas de l'écran avec redimensionnement réel de l'affichage (*Display Inset / Overscan*), garantissant que **ZLink et les applications GPS ne sont jamais masqués**.
+Application automobile conçue spécialement pour autoradios et tablettes Android en voiture (compatible **ZLink / CarPlay / Android Auto / Waze / Google Maps**).
 
----
-
-## 🎛️ Boutons intégrés (Bas de l'écran)
-
-1. **Retour (◀) :** Exécute l'action Retour système sur toutes les applications.
-2. **Accueil (⌂) :** Quitte ZLink / Android Auto instantanément en 1 clic pour revenir au menu d'origine de la voiture.
-3. **Mute (🔇) :** Coupe et rétablit le son instantanément avec retour visuel rouge.
-4. **Volume Moins (−) :** Clic simple ou appui continu pour baisser rapidement.
-5. **Volume Plus (+) :** Zone tactile élargie avec halo lumineux ambré pour un repérage immédiat de nuit.
+Elle ajoute un îlot flottant déplaçable avec les contrôles essentiels de conduite, toujours accessible et configurable selon vos préférences.
 
 ---
 
-## 🚀 Installation & Première configuration
+## 🆕 Nouveautés Version 1.1.0
 
-### Étape 1 : Compiler ou installer l'APK
-1. Ouvrez ce dossier dans **Android Studio** ou lancez `./gradlew assembleDebug`.
-2. Copiez le fichier `app-debug.apk` généré sur une **clé USB**.
-3. Branchez la clé USB sur votre autoradio et installez l'APK via le gestionnaire de fichiers (*File Manager*).
+- 🎛️ **Format du Menu Flottant :**
+  - **Horizontal (En ligne) :** Idéal pour être placé en bas ou en haut de l'écran.
+  - **Vertical (En colonne) :** Idéal pour être placé sur le côté gauche (immédiatement accessible près de la main du conducteur) ou sur le côté droit.
+- 📏 **Choix de la Taille des Boutons :**
+  - **Compact (44 dp) :** Discret, prend un minimum de place.
+  - **Standard (56 dp) :** Taille équilibrée.
+  - **Grand (68 dp) :** *Recommandé Voiture* — boutons bien espacés, faciles à toucher au volant.
+  - **Très Grand (80 dp) :** Gros boutons tactiles haute visibilité.
+- 🎨 **Style Nocturne Homogène :**
+  - Le bouton `+` adopte désormais la même finition sombre élégante avec icône blanche nette que les autres boutons (suppression de l'orange permanent).
+  - Retour visuel rouge ambré sur le bouton Sourdine (Mute) lorsqu'il est activé.
+- 🔄 **Mise à jour en temps réel :**
+  - Tout changement dans les réglages de l'application met à jour la barre flottante instantanément sans redémarrage requis.
 
-### Étape 2 : Activer les autorisations (Depuis l'application)
-1. Ouvrez l'application **Car HeadUnit Dock** sur l'autoradio.
-2. Cliquez sur **Activer** pour la permission **Affichage au-dessus des applications**.
-3. Cliquez sur **Activer** pour le **Service d'Accessibilité** (indispensable pour les boutons Retour et Home).
+---
 
-### Étape 3 : Activer le redimensionnement d'écran (Méthode 2)
-- Si votre autoradio est rooté (cas classique de nombreuses tablettes chinoises FYT / Topway / UIS7862) :
-  - Cliquez simplement sur le bouton **"Activer Inset (52px)"** directement dans l'application !
-- Si votre autoradio n'est pas rooté :
-  - Connectez-vous une seule fois en ADB (via Wi-Fi ou câble USB) et tapez :
-    ```bash
-    adb shell wm overscan 0,0,0,52
-    ```
-  - *(Pour réinitialiser à tout moment si besoin : `adb shell wm overscan reset`)*.
+## 🎛️ Boutons intégrés
 
-### Étape 4 : Réglage indispensable dans ZLink
-1. Ouvrez **ZLink / Zlink5** sur votre autoradio.
-2. Allez dans les paramètres de ZLink (icône engrenage).
-3. Assurez-vous que l'option **"Full Screen"** est désactivée (ou activez **"Keep Navigation Bar" / "Conserver la barre"**).
-4. Connectez votre téléphone : **Android Auto se calera automatiquement au millimètre au-dessus de votre nouvelle barre** !
+1. **Poignée de déplacement (`⋮⋮` ou `⋯`) :** Touchez et glissez avec le doigt pour positionner l'îlot n'importe où sur l'écran (la position est mémorisée automatiquement).
+2. **Retour (◀) :** Exécute l'action Retour système sur toutes les applications.
+3. **Accueil (⌂) :** Quitte ZLink / CarPlay / GPS en 1 clic pour revenir au menu d'origine de la voiture.
+4. **Mute (🔇) :** Coupe le son instantanément (voyant rouge). Un appui ou l'utilisation du volume rétablit le son précédent.
+5. **Volume Moins (−) :** Clic simple ou appui prolongé pour baisser le son rapidement.
+6. **Volume Plus (+) :** Clic simple ou appui prolongé pour monter le son rapidement.
+
+---
+
+## 🚀 Installation & Utilisation
+
+### Téléchargement direct de l'APK
+Téléchargez la dernière version compilée depuis la page **[Releases](https://github.com/nadir958/CarHeadUnitDock/releases)** :
+👉 **`CarHeadUnitDock.apk`**
+
+### Configuration sur l'Autoradio
+1. Installez l'APK sur l'autoradio (via clé USB ou téléchargement direct).
+2. Ouvrez **Car HeadUnit Dock**.
+3. Activez les deux autorisations nécessaires :
+   - **Affichage par-dessus les applications**
+   - **Service d'Accessibilité** (pour les touches Retour et Home)
+4. Choisissez votre **Format** (Horizontal ou Vertical) et la **Taille** des boutons.
+5. Cliquez sur **Activer la Barre** et placez-la où vous préférez sur l'écran !

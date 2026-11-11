@@ -110,7 +110,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Carte 2 : Choix des 2 Options (Option A vs Option B) -->
+        <!-- Carte 2 : Format du Menu (Horizontal vs Vertical) -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -129,7 +129,149 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="2. Configuration de l'Écran (Les 2 Options)"
+                    android:text="2. Format du Menu Flottant"
+                    android:textColor="@color/car_accent_amber"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Choisissez l'orientation de la barre flottante selon votre cockpit :"
+                    android:textColor="@color/car_text_secondary"
+                    android:textSize="12sp" />
+
+                <RadioGroup
+                    android:id="@+id/rgMenuOrientation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp">
+
+                    <RadioButton
+                        android:id="@+id/radioOrientHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/car_accent_amber"
+                        android:text="Horizontal (En ligne — Recommandé en bas ou haut)"
+                        android:textColor="@color/car_text_primary"
+                        android:textSize="13sp" />
+
+                    <RadioButton
+                        android:id="@+id/radioOrientVertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:buttonTint="@color/car_accent_amber"
+                        android:text="Vertical (En colonne — Côté conducteur gauche ou droit)"
+                        android:textColor="@color/car_text_primary"
+                        android:textSize="13sp" />
+                </RadioGroup>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Carte 3 : Taille des Boutons -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="@color/car_surface_dark"
+            app:cardCornerRadius="16dp"
+            app:strokeColor="@color/car_border_dark"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="3. Taille des Boutons Tactiles"
+                    android:textColor="@color/car_accent_amber"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Ajustez la taille selon la distance et la diagonale de votre écran :"
+                    android:textColor="@color/car_text_secondary"
+                    android:textSize="12sp" />
+
+                <RadioGroup
+                    android:id="@+id/rgButtonSize"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp">
+
+                    <RadioButton
+                        android:id="@+id/radioSizeCompact"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/car_accent_amber"
+                        android:text="Compact (44 dp) — Discret"
+                        android:textColor="@color/car_text_primary"
+                        android:textSize="13sp" />
+
+                    <RadioButton
+                        android:id="@+id/radioSizeMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:buttonTint="@color/car_accent_amber"
+                        android:text="Standard (56 dp) — Équilibré"
+                        android:textColor="@color/car_text_primary"
+                        android:textSize="13sp" />
+
+                    <RadioButton
+                        android:id="@+id/radioSizeLarge"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:buttonTint="@color/car_accent_amber"
+                        android:text="Grand (68 dp) — Recommandé Tablette Voiture"
+                        android:textColor="@color/car_text_primary"
+                        android:textSize="13sp" />
+
+                    <RadioButton
+                        android:id="@+id/radioSizeXLarge"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:buttonTint="@color/car_accent_amber"
+                        android:text="Très Grand (80 dp) — Gros boutons haute visibilité"
+                        android:textColor="@color/car_text_primary"
+                        android:textSize="13sp" />
+                </RadioGroup>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Carte 4 : Choix des 2 Options (Option A vs Option B) -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="@color/car_surface_dark"
+            app:cardCornerRadius="16dp"
+            app:strokeColor="@color/car_border_dark"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="4. Configuration de l'Écran (Options d'Affichage)"
                     android:textColor="@color/car_accent_amber"
                     android:textSize="15sp"
                     android:textStyle="bold" />
@@ -146,7 +288,7 @@
                     android:id="@+id/rgIntegrationMode"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp">
+                    android:layout_marginTop="10dp">
 
                     <!-- OPTION A -->
                     <RadioButton
@@ -162,7 +304,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="32dp"
-                        android:text="La barre s'affiche en bas sans modifier la résolution de l'écran."
+                        android:text="La barre s'affiche en îlot flottant déplaçable sans modifier la résolution."
                         android:textColor="@color/car_text_muted"
                         android:textSize="11sp" />
 
@@ -171,8 +313,7 @@
                         android:id="@+id/radioOptionB"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:checked="true"
+                        android:layout_marginTop="10dp"
                         android:buttonTint="@color/car_accent_amber"
                         android:text="Option B : Redimensionnement d'écran (Display Inset - Zéro masquage)"
                         android:textColor="@color/car_text_primary"
