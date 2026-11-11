@@ -161,7 +161,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="32dp"
-                        android:text="Bandeau complet pleine largeur en bas (ou pleine hauteur à gauche). Boutons répartis aux extrémités et espace utile réservé pour ne rien masquer du GPS."
+                        android:text="Bandeau complet pleine largeur en bas (ou pleine hauteur à gauche). Tous les boutons sont regroupés et centrés pour un accès facile au volant, avec espace réservé pour le GPS."
                         android:textColor="@color/car_text_muted"
                         android:textSize="11sp" />
 
@@ -183,6 +183,52 @@
                         android:textColor="@color/car_text_muted"
                         android:textSize="11sp" />
                 </RadioGroup>
+
+                <!-- Séparateur discret -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="14dp"
+                    android:layout_marginBottom="12dp"
+                    android:background="@color/car_border_dark" />
+
+                <!-- Option : Afficher / Masquer le bouton Récents (Multitâche) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Bouton Multitâche / Récents (▢)"
+                            android:textColor="@color/car_text_primary"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Affiche le bouton carré pour basculer rapidement entre les applications (GPS / Musique)."
+                            android:textColor="@color/car_text_secondary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchShowRecents"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:checked="true" />
+                </LinearLayout>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

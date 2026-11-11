@@ -74,6 +74,8 @@ class CarDockOverlayService : Service() {
         const val STYLE_DEDICATED = "dedicated" // Barre Dédiée Ancrée (Style Tesla)
         const val STYLE_FLOATING = "floating"   // Îlot Flottant Mobile
 
+        const val PREF_SHOW_RECENTS = "show_recents_button"
+
         const val PREF_DOCK_ORIENTATION = "dock_orientation"
         const val ORIENT_HORIZONTAL = "horizontal"
         const val ORIENT_VERTICAL = "vertical"
@@ -316,18 +318,31 @@ class CarDockOverlayService : Service() {
         btnMute.scaleType = ImageView.ScaleType.FIT_CENTER
         updateMuteStateVisual()
 
+        val showRecents = prefs.getBoolean(PREF_SHOW_RECENTS, true)
+        btnRecents.visibility = if (showRecents) View.VISIBLE else View.GONE
+
         if (isDedicated) {
             // =========================================================================
-            // MODE BARRE DÉDIÉE ANCRÉE (STYLE TESLA / OEM)
+            // MODE BARRE DÉDIÉE ANCRÉE (STYLE TESLA / OEM) - TOUS BOUTONS CENTRÉS
             // =========================================================================
             dragHandle.visibility = View.GONE
-            dockSeparator.visibility = View.GONE
-            dockCenterSpacer.visibility = View.VISIBLE
+            dockCenterSpacer.visibility = View.GONE
+            dockSeparator.visibility = View.VISIBLE
+
+            val sepThicknessPx = (2f * density).toInt().coerceAtLeast(1)
+            val sepLengthPx = (btnSizePx * 0.52f).toInt()
+            val sepDrawable = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                setColor(Color.parseColor("#2E3D52"))
+                cornerRadius = (1.5f * density)
+            }
+            dockSeparator.background = sepDrawable
 
             if (isVertical) {
-                // Style CarPlay : Bandeau vertical pleine hauteur côté conducteur
+                // Style CarPlay : Bandeau vertical pleine hauteur côté conducteur (Boutons centrés)
                 container.orientation = LinearLayout.VERTICAL
-                container.setPadding(0, (14 * density).toInt(), 0, (14 * density).toInt())
+                container.gravity = Gravity.CENTER
+                container.setPadding(0, 0, 0, 0)
 
                 val barBg = GradientDrawable().apply {
                     shape = GradientDrawable.RECTANGLE
@@ -337,24 +352,28 @@ class CarDockOverlayService : Service() {
                 }
                 container.background = barBg
 
-                // Boutons de navigation (en haut)
+                // Boutons de navigation (en haut de la grappe centrale)
                 btnBack.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
                     gravity = Gravity.CENTER_HORIZONTAL
                     bottomMargin = spacingPx
                 }
                 btnHome.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
                     gravity = Gravity.CENTER_HORIZONTAL
-                    bottomMargin = spacingPx
+                    bottomMargin = if (showRecents) spacingPx else (spacingPx / 2)
                 }
                 btnRecents.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
                     gravity = Gravity.CENTER_HORIZONTAL
-                    bottomMargin = 0
+                    bottomMargin = (spacingPx / 2)
                 }
 
-                // Espaceur central flexible
-                dockCenterSpacer.layoutParams = LinearLayout.LayoutParams(0, 0, 1.0f)
+                // Séparateur fin
+                dockSeparator.layoutParams = LinearLayout.LayoutParams(sepLengthPx, sepThicknessPx).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    topMargin = (spacingPx / 2)
+                    bottomMargin = spacingPx
+                }
 
-                // Boutons multimédia / audio (en bas)
+                // Boutons multimédia / audio (en bas de la grappe centrale)
                 btnMute.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
                     gravity = Gravity.CENTER_HORIZONTAL
                     bottomMargin = spacingPx
@@ -378,9 +397,10 @@ class CarDockOverlayService : Service() {
                 // Réserver l'espace d'affichage pour les applications
                 DisplayResizeManager.applyInsets(this, leftPx = barThicknessPx)
             } else {
-                // Style Tesla : Bandeau horizontal pleine largeur tout en bas
+                // Style Tesla : Bandeau horizontal pleine largeur tout en bas (TOUS LES BOUTONS CENTRÉS)
                 container.orientation = LinearLayout.HORIZONTAL
-                container.setPadding((16 * density).toInt(), 0, (16 * density).toInt(), 0)
+                container.gravity = Gravity.CENTER
+                container.setPadding(0, 0, 0, 0)
 
                 val barBg = GradientDrawable().apply {
                     shape = GradientDrawable.RECTANGLE
@@ -390,24 +410,28 @@ class CarDockOverlayService : Service() {
                 }
                 container.background = barBg
 
-                // Boutons de navigation (à gauche)
+                // Boutons de navigation (centrés à gauche du séparateur)
                 btnBack.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
                     gravity = Gravity.CENTER_VERTICAL
                     marginEnd = spacingPx
                 }
                 btnHome.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
                     gravity = Gravity.CENTER_VERTICAL
-                    marginEnd = spacingPx
+                    marginEnd = if (showRecents) spacingPx else (spacingPx / 2)
                 }
                 btnRecents.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
                     gravity = Gravity.CENTER_VERTICAL
-                    marginEnd = 0
+                    marginEnd = (spacingPx / 2)
                 }
 
-                // Espaceur central flexible (pousse les contrôles aux deux extrémités)
-                dockCenterSpacer.layoutParams = LinearLayout.LayoutParams(0, 0, 1.0f)
+                // Séparateur fin au centre
+                dockSeparator.layoutParams = LinearLayout.LayoutParams(sepThicknessPx, sepLengthPx).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                    marginStart = (spacingPx / 2)
+                    marginEnd = spacingPx
+                }
 
-                // Boutons multimédia / audio (à droite)
+                // Boutons multimédia / audio (centrés à droite du séparateur)
                 btnMute.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
                     gravity = Gravity.CENTER_VERTICAL
                     marginEnd = spacingPx

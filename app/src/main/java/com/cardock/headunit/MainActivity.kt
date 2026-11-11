@@ -39,6 +39,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var radioOptionA: RadioButton
     private lateinit var radioOptionB: RadioButton
 
+    private lateinit var switchShowRecents: androidx.appcompat.widget.SwitchCompat
     private lateinit var switchSnapToEdge: androidx.appcompat.widget.SwitchCompat
 
     private lateinit var btnStartDock: Button
@@ -51,6 +52,8 @@ class MainActivity : AppCompatActivity() {
         const val PREF_DOCK_STYLE = "dock_style"
         const val STYLE_DEDICATED = "dedicated" // Barre Dédiée Ancrée (Style Tesla)
         const val STYLE_FLOATING = "floating"   // Îlot Flottant Mobile
+
+        const val PREF_SHOW_RECENTS = "show_recents_button"
 
         const val PREF_INTEGRATION_MODE = "integration_mode"
         const val MODE_OPTION_A = "option_a" // Superposition
@@ -109,6 +112,7 @@ class MainActivity : AppCompatActivity() {
         radioOptionA = findViewById(R.id.radioOptionA)
         radioOptionB = findViewById(R.id.radioOptionB)
 
+        switchShowRecents = findViewById(R.id.switchShowRecents)
         switchSnapToEdge = findViewById(R.id.switchSnapToEdge)
 
         btnStartDock = findViewById(R.id.btnStartDock)
@@ -124,7 +128,10 @@ class MainActivity : AppCompatActivity() {
             rgDockStyle.check(R.id.radioStyleDedicated)
         }
 
-        // 2. Format Orientation
+        // 2. Affichage du bouton Récents
+        switchShowRecents.isChecked = prefs.getBoolean(PREF_SHOW_RECENTS, true)
+
+        // 3. Format Orientation
         val orientation = prefs.getString(PREF_DOCK_ORIENTATION, ORIENT_HORIZONTAL)
         if (orientation == ORIENT_VERTICAL) {
             rgMenuOrientation.check(R.id.radioOrientVertical)
@@ -132,7 +139,7 @@ class MainActivity : AppCompatActivity() {
             rgMenuOrientation.check(R.id.radioOrientHorizontal)
         }
 
-        // 3. Taille des boutons
+        // 4. Taille des boutons
         when (prefs.getString(PREF_DOCK_SIZE, SIZE_LARGE)) {
             SIZE_COMPACT -> rgButtonSize.check(R.id.radioSizeCompact)
             SIZE_MEDIUM -> rgButtonSize.check(R.id.radioSizeMedium)
@@ -140,10 +147,10 @@ class MainActivity : AppCompatActivity() {
             else -> rgButtonSize.check(R.id.radioSizeLarge)
         }
 
-        // 4. Aimantation Intelligente (Snap to Edge)
+        // 5. Aimantation Intelligente (Snap to Edge)
         switchSnapToEdge.isChecked = prefs.getBoolean(PREF_SNAP_TO_EDGE, true)
 
-        // 5. Mode Intégration
+        // 6. Mode Intégration
         val currentMode = prefs.getString(PREF_INTEGRATION_MODE, MODE_OPTION_B)
         if (currentMode == MODE_OPTION_A) {
             rgIntegrationMode.check(R.id.radioOptionA)
@@ -182,7 +189,15 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Style choisi : $label", Toast.LENGTH_SHORT).show()
         }
 
-        // 4. Format du Menu (Horizontal vs Vertical)
+        // 4. Affichage du bouton Récents (Multitâche)
+        switchShowRecents.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(PREF_SHOW_RECENTS, isChecked).apply()
+            notifyDockConfigChanged()
+            val msg = if (isChecked) "Bouton Récents activé" else "Bouton Récents masqué"
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
+
+        // 5. Format du Menu (Horizontal vs Vertical)
         rgMenuOrientation.setOnCheckedChangeListener { _, checkedId ->
             val newOrient = if (checkedId == R.id.radioOrientVertical) ORIENT_VERTICAL else ORIENT_HORIZONTAL
             prefs.edit().putString(PREF_DOCK_ORIENTATION, newOrient).apply()
