@@ -8,9 +8,11 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.RippleDrawable
 import android.media.AudioManager
 import android.os.Build
 import android.os.Handler
@@ -46,6 +48,7 @@ class CarDockOverlayService : Service() {
     private val repeatHandler = Handler(Looper.getMainLooper())
     private var isMuted = false
     private var volumeBeforeMute = 0
+    private var currentButtonRadiusPx = 18f
 
     // Variables pour le déplacement tactile fluide
     private var initialX = 0
@@ -65,14 +68,23 @@ class CarDockOverlayService : Service() {
         const val ORIENT_VERTICAL = "vertical"
 
         const val PREF_DOCK_SIZE = "dock_size"
-        const val SIZE_COMPACT = "compact" // 44dp
-        const val SIZE_MEDIUM = "medium"   // 56dp
-        const val SIZE_LARGE = "large"     // 68dp
-        const val SIZE_XLARGE = "xlarge"   // 80dp
+        const val SIZE_COMPACT = "compact"
+        const val SIZE_MEDIUM = "medium"
+        const val SIZE_LARGE = "large"
+        const val SIZE_XLARGE = "xlarge"
 
         const val ACTION_UPDATE_CONFIG = "com.cardock.headunit.ACTION_UPDATE_CONFIG"
         var isServiceRunning = false
     }
+
+    private data class DockPreset(
+        val buttonSizeDp: Int,
+        val dragBreadthDp: Int,
+        val padLateralDp: Int,
+        val padCrossDp: Int,
+        val spacingDp: Int,
+        val iconPaddingDp: Int
+    )
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -128,9 +140,9 @@ class CarDockOverlayService : Service() {
         val screenWidth = displayMetrics.widthPixels
         val screenHeight = displayMetrics.heightPixels
 
-        // Position par défaut
-        val defaultX = (screenWidth - (300 * density).toInt()) / 2
-        val defaultY = screenHeight - (76 * density).toInt() - (16 * density).toInt()
+        // Position par défaut centrée en bas
+        val defaultX = (screenWidth - (380 * density).toInt()) / 2
+        val defaultY = screenHeight - (80 * density).toInt() - (16 * density).toInt()
 
         val savedX = prefs.getInt(PREF_POS_X, defaultX)
         val savedY = prefs.getInt(PREF_POS_Y, defaultY)
@@ -169,13 +181,6 @@ class CarDockOverlayService : Service() {
         btnVolDown = view.findViewById(R.id.btnVolDown)
         btnVolUp = view.findViewById(R.id.btnVolUp)
 
-        // Assurer un style homogène sombre pour tous les boutons
-        btnBack.setBackgroundResource(R.drawable.bg_button_night)
-        btnHome.setBackgroundResource(R.drawable.bg_button_night)
-        btnMute.setBackgroundResource(R.drawable.bg_button_night)
-        btnVolDown.setBackgroundResource(R.drawable.bg_button_night)
-        btnVolUp.setBackgroundResource(R.drawable.bg_button_night)
-
         // 1. Action RETOUR
         btnBack.setOnClickListener {
             android.util.Log.d("CarDockOverlayService", "btnBack clicked")
@@ -208,74 +213,143 @@ class CarDockOverlayService : Service() {
     }
 
     /**
-     * Applique dynamiquement l'orientation (Horizontal / Vertical)
-     * et la taille des boutons (Compact 44dp, Medium 56dp, Large 68dp, XLarge 80dp).
+     * Applique une mise à l'échelle harmonieuse et proportionnelle de toute la barre :
+     * conteneur capsule, poignée tactile de déplacement, boutons en squircle parfait,
+     * séparateur et marges équilibrées.
      */
     private fun applyDockConfiguration() {
         val density = resources.displayMetrics.density
         val orientation = prefs.getString(PREF_DOCK_ORIENTATION, ORIENT_HORIZONTAL) ?: ORIENT_HORIZONTAL
         val sizePref = prefs.getString(PREF_DOCK_SIZE, SIZE_LARGE) ?: SIZE_LARGE
 
-        val btnSizeDp = when (sizePref) {
-            SIZE_COMPACT -> 44
-            SIZE_MEDIUM -> 56
-            SIZE_XLARGE -> 80
-            else -> 68
+        val preset = when (sizePref) {
+            SIZE_COMPACT -> DockPreset(
+                buttonSizeDp = 42,
+                dragBreadthDp = 28,
+                padLateralDp = 10,
+                padCrossDp = 7,
+                spacingDp = 6,
+                iconPaddingDp = 9
+            )
+            SIZE_MEDIUM -> DockPreset(
+                buttonSizeDp = 52,
+                dragBreadthDp = 34,
+                padLateralDp = 12,
+                padCrossDp = 8,
+                spacingDp = 8,
+                iconPaddingDp = 11
+            )
+            SIZE_XLARGE -> DockPreset(
+                buttonSizeDp = 72,
+                dragBreadthDp = 46,
+                padLateralDp = 16,
+                padCrossDp = 12,
+                spacingDp = 11,
+                iconPaddingDp = 15
+            )
+            else -> DockPreset( // SIZE_LARGE (Grand - Recommandé Tablette Voiture)
+                buttonSizeDp = 60,
+                dragBreadthDp = 38,
+                padLateralDp = 14,
+                padCrossDp = 10,
+                spacingDp = 9,
+                iconPaddingDp = 13
+            )
         }
-        val btnSizePx = (btnSizeDp * density).toInt()
 
-        // Padding interne des boutons pour mise à l'échelle harmonieuse des icônes
-        val iconPaddingPx = when (sizePref) {
-            SIZE_COMPACT -> (9 * density).toInt()
-            SIZE_MEDIUM -> (12 * density).toInt()
-            SIZE_XLARGE -> (17 * density).toInt()
-            else -> (14 * density).toInt()
-        }
+        val btnSizePx = (preset.buttonSizeDp * density).toInt()
+        val dragBreadthPx = (preset.dragBreadthDp * density).toInt()
+        val padLateralPx = (preset.padLateralDp * density).toInt()
+        val padCrossPx = (preset.padCrossDp * density).toInt()
+        val spacingPx = (preset.spacingDp * density).toInt()
+        val iconPaddingPx = (preset.iconPaddingDp * density).toInt()
 
-        val spacingPx = (6 * density).toInt()
-        val padLateralPx = (8 * density).toInt()
-        val padCrossPx = (5 * density).toInt()
+        // Rayon de courbure proportionnel (Squircle 30%)
+        currentButtonRadiusPx = btnSizePx * 0.30f
+        val strokeWidthPx = (1.2f * density).toInt().coerceAtLeast(1)
 
         val isVertical = (orientation == ORIENT_VERTICAL)
 
-        // 1. Orientation du conteneur
+        // 1. Configuration de l'orientation du conteneur
         container.orientation = if (isVertical) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
 
-        // 2. Padding du conteneur selon l'orientation
+        // 2. Padding interne du conteneur
         if (isVertical) {
             container.setPadding(padCrossPx, padLateralPx, padCrossPx, padLateralPx)
         } else {
             container.setPadding(padLateralPx, padCrossPx, padLateralPx, padCrossPx)
         }
 
-        // 3. Poignée de déplacement (dragHandle : large zone tactile)
-        val handleSizePx = (36 * density).toInt()
+        // 3. Fond capsule du conteneur flottant (Courbure continue sur toute la hauteur)
+        val crossAxisSize = btnSizePx + (padCrossPx * 2)
+        val capsuleRadius = crossAxisSize / 2f
+        val capsuleBg = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            setColor(Color.parseColor("#F00A0E17")) // Noir profond automobile 94%
+            cornerRadius = capsuleRadius
+            setStroke((1.5f * density).toInt().coerceAtLeast(1), Color.parseColor("#2E3D52"))
+        }
+        container.background = capsuleBg
+
+        // 4. Poignée de déplacement tactile (Bouton de déplacement dédié)
+        val dragHandleBg = createRippleSquircle(
+            fillColor = Color.parseColor("#131B28"),
+            strokeColor = Color.parseColor("#273547"),
+            strokeWidthPx = strokeWidthPx,
+            rippleColor = Color.parseColor("#344863"),
+            radiusPx = currentButtonRadiusPx
+        )
+        dragHandle.background = dragHandleBg
+        dragHandle.rotation = 0f
+        dragHandle.setPadding((6 * density).toInt(), (6 * density).toInt(), (6 * density).toInt(), (6 * density).toInt())
+
         if (isVertical) {
-            val dragLp = LinearLayout.LayoutParams(btnSizePx, handleSizePx).apply {
+            dragHandle.setImageResource(R.drawable.ic_drag_handle_vertical)
+            dragHandle.layoutParams = LinearLayout.LayoutParams(btnSizePx, dragBreadthPx).apply {
                 gravity = Gravity.CENTER_HORIZONTAL
-                bottomMargin = (4 * density).toInt()
+                bottomMargin = spacingPx
             }
-            dragHandle.layoutParams = dragLp
-            dragHandle.rotation = 90f // Barres orientées horizontalement pour drag vertical
         } else {
-            val dragLp = LinearLayout.LayoutParams(handleSizePx, btnSizePx).apply {
+            dragHandle.setImageResource(R.drawable.ic_drag_handle_horizontal)
+            dragHandle.layoutParams = LinearLayout.LayoutParams(dragBreadthPx, btnSizePx).apply {
                 gravity = Gravity.CENTER_VERTICAL
-                marginEnd = (4 * density).toInt()
+                marginEnd = spacingPx
             }
-            dragHandle.layoutParams = dragLp
-            dragHandle.rotation = 0f
         }
 
-        // 4. Liste des boutons interactifs
-        val buttons = listOf(btnBack, btnHome, btnMute, btnVolDown, btnVolUp)
+        // 5. Stylisation et dimensionnement des boutons
+        val normalBtnBgSupplier = {
+            createRippleSquircle(
+                fillColor = Color.parseColor("#182232"),
+                strokeColor = Color.parseColor("#2C3B4E"),
+                strokeWidthPx = strokeWidthPx,
+                rippleColor = Color.parseColor("#384F6E"),
+                radiusPx = currentButtonRadiusPx
+            )
+        }
+
+        val buttons = listOf(btnBack, btnHome, btnVolDown, btnVolUp)
         for (btn in buttons) {
+            btn.background = normalBtnBgSupplier()
             btn.setPadding(iconPaddingPx, iconPaddingPx, iconPaddingPx, iconPaddingPx)
             btn.scaleType = ImageView.ScaleType.FIT_CENTER
         }
 
-        // Appliquer les marges et dimensions aux boutons
+        btnMute.setPadding(iconPaddingPx, iconPaddingPx, iconPaddingPx, iconPaddingPx)
+        btnMute.scaleType = ImageView.ScaleType.FIT_CENTER
+        updateMuteStateVisual()
+
+        // 6. Disposition des boutons et du séparateur selon l'orientation
+        val sepThicknessPx = (2f * density).toInt().coerceAtLeast(1)
+        val sepLengthPx = (btnSizePx * 0.52f).toInt()
+        val sepDrawable = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            setColor(Color.parseColor("#2E3D52"))
+            cornerRadius = (1.5f * density)
+        }
+        dockSeparator.background = sepDrawable
+
         if (isVertical) {
-            // Disposition en COLONNE
             btnBack.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
                 gravity = Gravity.CENTER_HORIZONTAL
                 bottomMargin = spacingPx
@@ -285,8 +359,7 @@ class CarDockOverlayService : Service() {
                 bottomMargin = spacingPx
             }
 
-            // Séparateur horizontal en mode vertical
-            dockSeparator.layoutParams = LinearLayout.LayoutParams((btnSizePx * 0.55f).toInt(), (1.5f * density).toInt()).apply {
+            dockSeparator.layoutParams = LinearLayout.LayoutParams(sepLengthPx, sepThicknessPx).apply {
                 gravity = Gravity.CENTER_HORIZONTAL
                 topMargin = (spacingPx / 2)
                 bottomMargin = spacingPx
@@ -305,56 +378,45 @@ class CarDockOverlayService : Service() {
                 bottomMargin = 0
             }
         } else {
-            // Disposition en LIGNE (Horizontal)
             btnBack.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
                 gravity = Gravity.CENTER_VERTICAL
-                marginStart = (4 * density).toInt()
+                marginEnd = spacingPx
             }
             btnHome.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
                 gravity = Gravity.CENTER_VERTICAL
-                marginStart = spacingPx
+                marginEnd = spacingPx
             }
 
-            // Séparateur vertical en mode horizontal
-            dockSeparator.layoutParams = LinearLayout.LayoutParams((1.5f * density).toInt(), (btnSizePx * 0.55f).toInt()).apply {
+            dockSeparator.layoutParams = LinearLayout.LayoutParams(sepThicknessPx, sepLengthPx).apply {
                 gravity = Gravity.CENTER_VERTICAL
-                marginStart = spacingPx
                 marginEnd = spacingPx
             }
 
             btnMute.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
                 gravity = Gravity.CENTER_VERTICAL
+                marginEnd = spacingPx
             }
             btnVolDown.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
                 gravity = Gravity.CENTER_VERTICAL
-                marginStart = spacingPx
+                marginEnd = spacingPx
             }
             btnVolUp.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
                 gravity = Gravity.CENTER_VERTICAL
-                marginStart = spacingPx
+                marginEnd = 0
             }
         }
 
-        // 5. Fond capsule flottant dynamique (arrondi parfait quel que soit le diamètre des boutons)
-        val crossAxisSize = btnSizePx + (padCrossPx * 2)
-        val capsuleRadius = crossAxisSize / 2f
-        val capsuleBg = GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            setColor(Color.parseColor("#F2090D16"))
-            cornerRadius = capsuleRadius
-            setStroke((1.5f * density).toInt(), Color.parseColor("#334155"))
-        }
-        container.background = capsuleBg
-
-        // 6. Mise à jour de la disposition WindowManager
+        // 7. Recalcul et repositionnement précis de la fenêtre de superposition
         val displayMetrics = resources.displayMetrics
         val screenWidth = displayMetrics.widthPixels
         val screenHeight = displayMetrics.heightPixels
 
-        val estimatedW = if (isVertical) (btnSizePx + padCrossPx * 2) else ((btnSizeDp * 5 + 90) * density).toInt()
-        val estimatedH = if (isVertical) ((btnSizeDp * 5 + 90) * density).toInt() else (btnSizePx + padCrossPx * 2)
+        val totalBreadthPx = (padLateralPx * 2) + dragBreadthPx + (5 * btnSizePx) + (6 * spacingPx) + sepThicknessPx
+        val totalCrossPx = btnSizePx + (padCrossPx * 2)
 
-        // Réajuster pour garantir que la barre reste entièrement visible dans l'écran
+        val estimatedW = if (isVertical) totalCrossPx else totalBreadthPx
+        val estimatedH = if (isVertical) totalBreadthPx else totalCrossPx
+
         layoutParams.width = WindowManager.LayoutParams.WRAP_CONTENT
         layoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT
         layoutParams.x = layoutParams.x.coerceIn(0, (screenWidth - estimatedW).coerceAtLeast(0))
@@ -366,14 +428,14 @@ class CarDockOverlayService : Service() {
     }
 
     private fun setupDragListener() {
-        val onTouchDrag = View.OnTouchListener { _, event ->
+        val onTouchDrag = View.OnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    v.isPressed = true
                     initialX = layoutParams.x
                     initialY = layoutParams.y
                     initialTouchX = event.rawX
                     initialTouchY = event.rawY
-                    android.util.Log.d("CarDockOverlayService", "DRAG DOWN initX=$initialX, initY=$initialY, rawX=${event.rawX}, rawY=${event.rawY}")
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
@@ -383,20 +445,19 @@ class CarDockOverlayService : Service() {
                     val displayMetrics = resources.displayMetrics
                     val screenWidth = displayMetrics.widthPixels
                     val screenHeight = displayMetrics.heightPixels
-                    val viewW = if (dockView?.width ?: 0 > 0) dockView!!.width else 120
-                    val viewH = if (dockView?.height ?: 0 > 0) dockView!!.height else 120
+                    val viewW = if (dockView?.width ?: 0 > 0) dockView!!.width else 160
+                    val viewH = if (dockView?.height ?: 0 > 0) dockView!!.height else 80
 
                     layoutParams.x = (initialX + deltaX).coerceIn(0, (screenWidth - viewW).coerceAtLeast(0))
                     layoutParams.y = (initialY + deltaY).coerceIn(0, (screenHeight - viewH).coerceAtLeast(0))
-                    android.util.Log.d("CarDockOverlayService", "DRAG MOVE to x=${layoutParams.x}, y=${layoutParams.y}")
 
                     if (dockView != null && dockView!!.isAttachedToWindow) {
                         windowManager.updateViewLayout(dockView, layoutParams)
                     }
                     true
                 }
-                MotionEvent.ACTION_UP -> {
-                    android.util.Log.d("CarDockOverlayService", "DRAG UP saved pos (${layoutParams.x}, ${layoutParams.y})")
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    v.isPressed = false
                     prefs.edit()
                         .putInt(PREF_POS_X, layoutParams.x)
                         .putInt(PREF_POS_Y, layoutParams.y)
@@ -448,7 +509,6 @@ class CarDockOverlayService : Service() {
     }
 
     private fun adjustVolume(direction: Int) {
-        android.util.Log.d("CarDockOverlayService", "adjustVolume dir=$direction, isMuted=$isMuted")
         if (isMuted && direction == AudioManager.ADJUST_RAISE) {
             isMuted = false
             val restoreVol = if (volumeBeforeMute > 0) volumeBeforeMute else 5
@@ -479,13 +539,55 @@ class CarDockOverlayService : Service() {
     }
 
     private fun updateMuteStateVisual() {
+        val density = resources.displayMetrics.density
         if (isMuted) {
-            btnMute.setBackgroundResource(R.drawable.bg_button_mute_active)
-            btnMute.setImageResource(R.drawable.ic_mute)
+            val muteBg = createRippleSquircle(
+                fillColor = Color.parseColor("#38141E"),
+                strokeColor = Color.parseColor("#EF4444"),
+                strokeWidthPx = (1.8f * density).toInt().coerceAtLeast(2),
+                rippleColor = Color.parseColor("#661D2E"),
+                radiusPx = currentButtonRadiusPx
+            )
+            btnMute.background = muteBg
         } else {
-            btnMute.setBackgroundResource(R.drawable.bg_button_night)
-            btnMute.setImageResource(R.drawable.ic_mute)
+            val normalBg = createRippleSquircle(
+                fillColor = Color.parseColor("#182232"),
+                strokeColor = Color.parseColor("#2C3B4E"),
+                strokeWidthPx = (1.2f * density).toInt().coerceAtLeast(1),
+                rippleColor = Color.parseColor("#384F6E"),
+                radiusPx = currentButtonRadiusPx
+            )
+            btnMute.background = normalBg
         }
+        btnMute.setImageResource(R.drawable.ic_mute)
+    }
+
+    private fun createSquircleDrawable(
+        fillColor: Int,
+        strokeColor: Int,
+        strokeWidthPx: Int,
+        radiusPx: Float
+    ): GradientDrawable {
+        return GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            setColor(fillColor)
+            cornerRadius = radiusPx
+            if (strokeWidthPx > 0) {
+                setStroke(strokeWidthPx, strokeColor)
+            }
+        }
+    }
+
+    private fun createRippleSquircle(
+        fillColor: Int,
+        strokeColor: Int,
+        strokeWidthPx: Int,
+        rippleColor: Int,
+        radiusPx: Float
+    ): RippleDrawable {
+        val content = createSquircleDrawable(fillColor, strokeColor, strokeWidthPx, radiusPx)
+        val mask = createSquircleDrawable(Color.WHITE, Color.TRANSPARENT, 0, radiusPx)
+        return RippleDrawable(ColorStateList.valueOf(rippleColor), content, mask)
     }
 
     override fun onDestroy() {

@@ -171,7 +171,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Carte 3 : Taille des Boutons -->
+        <!-- Carte 3 : Taille Globale de la Barre Flottante -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -190,7 +190,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="3. Taille des Boutons Tactiles"
+                    android:text="3. Taille Globale de la Barre Flottante"
                     android:textColor="@color/car_accent_amber"
                     android:textSize="15sp"
                     android:textStyle="bold" />
@@ -199,7 +199,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Ajustez la taille selon la distance et la diagonale de votre écran :"
+                    android:text="Mise à l'échelle proportionnelle (capsule, boutons squircle, poignée de déplacement et marges) :"
                     android:textColor="@color/car_text_secondary"
                     android:textSize="12sp" />
 
@@ -214,7 +214,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:buttonTint="@color/car_accent_amber"
-                        android:text="Compact (44 dp) — Discret"
+                        android:text="Compact (Boutons 42 dp / Barre 56 dp) — Discret"
                         android:textColor="@color/car_text_primary"
                         android:textSize="13sp" />
 
@@ -224,7 +224,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:buttonTint="@color/car_accent_amber"
-                        android:text="Standard (56 dp) — Équilibré"
+                        android:text="Standard (Boutons 52 dp / Barre 68 dp) — Équilibré"
                         android:textColor="@color/car_text_primary"
                         android:textSize="13sp" />
 
@@ -234,7 +234,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:buttonTint="@color/car_accent_amber"
-                        android:text="Grand (68 dp) — Recommandé Tablette Voiture"
+                        android:text="Grand (Boutons 60 dp / Barre 82 dp) — Recommandé Voiture"
                         android:textColor="@color/car_text_primary"
                         android:textSize="13sp" />
 
@@ -244,7 +244,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:buttonTint="@color/car_accent_amber"
-                        android:text="Très Grand (80 dp) — Gros boutons haute visibilité"
+                        android:text="Très Grand (Boutons 72 dp / Barre 96 dp) — Maxi Lisibilité Conduite"
                         android:textColor="@color/car_text_primary"
                         android:textSize="13sp" />
                 </RadioGroup>

@@ -153,7 +153,7 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Format du menu : $label", Toast.LENGTH_SHORT).show()
         }
 
-        // 4. Taille des boutons (Compact, Medium, Large, XLarge)
+        // 4. Taille globale de la barre (Compact, Medium, Large, XLarge)
         rgButtonSize.setOnCheckedChangeListener { _, checkedId ->
             val newSize = when (checkedId) {
                 R.id.radioSizeCompact -> SIZE_COMPACT
@@ -164,12 +164,12 @@ class MainActivity : AppCompatActivity() {
             prefs.edit().putString(PREF_DOCK_SIZE, newSize).apply()
             notifyDockConfigChanged()
             val label = when (newSize) {
-                SIZE_COMPACT -> "Compact (44 dp)"
-                SIZE_MEDIUM -> "Standard (56 dp)"
-                SIZE_XLARGE -> "Très Grand (80 dp)"
-                else -> "Grand (68 dp)"
+                SIZE_COMPACT -> "Compact (Barre 56 dp)"
+                SIZE_MEDIUM -> "Standard (Barre 68 dp)"
+                SIZE_XLARGE -> "Très Grand (Barre 96 dp)"
+                else -> "Grand (Barre 82 dp — Recommandé)"
             }
-            Toast.makeText(this, "Taille des boutons : $label", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Format de barre : $label", Toast.LENGTH_SHORT).show()
         }
 
         // 5. Mode Intégration
