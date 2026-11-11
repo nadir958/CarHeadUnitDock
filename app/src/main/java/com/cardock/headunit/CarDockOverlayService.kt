@@ -1,5 +1,8 @@
 package com.cardock.headunit
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ValueAnimator
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -23,6 +26,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
+import android.view.animation.DecelerateInterpolator
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -49,6 +53,7 @@ class CarDockOverlayService : Service() {
     private var isMuted = false
     private var volumeBeforeMute = 0
     private var currentButtonRadiusPx = 18f
+    private var snapAnimator: ValueAnimator? = null
 
     // Variables pour le déplacement tactile fluide
     private var initialX = 0
@@ -72,6 +77,8 @@ class CarDockOverlayService : Service() {
         const val SIZE_MEDIUM = "medium"
         const val SIZE_LARGE = "large"
         const val SIZE_XLARGE = "xlarge"
+
+        const val PREF_SNAP_TO_EDGE = "dock_snap_to_edge"
 
         const val ACTION_UPDATE_CONFIG = "com.cardock.headunit.ACTION_UPDATE_CONFIG"
         var isServiceRunning = false
@@ -425,12 +432,18 @@ class CarDockOverlayService : Service() {
         if (dockView != null && dockView!!.isAttachedToWindow) {
             windowManager.updateViewLayout(dockView, layoutParams)
         }
+
+        val snapEnabled = prefs.getBoolean(PREF_SNAP_TO_EDGE, true)
+        if (snapEnabled && dockView != null && dockView!!.isAttachedToWindow) {
+            snapDockToEdge(animate = false)
+        }
     }
 
     private fun setupDragListener() {
         val onTouchDrag = View.OnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    snapAnimator?.cancel()
                     v.isPressed = true
                     initialX = layoutParams.x
                     initialY = layoutParams.y
@@ -458,16 +471,130 @@ class CarDockOverlayService : Service() {
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     v.isPressed = false
-                    prefs.edit()
-                        .putInt(PREF_POS_X, layoutParams.x)
-                        .putInt(PREF_POS_Y, layoutParams.y)
-                        .apply()
+                    val snapEnabled = prefs.getBoolean(PREF_SNAP_TO_EDGE, true)
+                    if (snapEnabled) {
+                        snapDockToEdge(animate = true)
+                    } else {
+                        prefs.edit()
+                            .putInt(PREF_POS_X, layoutParams.x)
+                            .putInt(PREF_POS_Y, layoutParams.y)
+                            .apply()
+                    }
                     true
                 }
                 else -> false
             }
         }
         dragHandle.setOnTouchListener(onTouchDrag)
+    }
+
+    /**
+     * Aimantation intelligente au bord de l'écran le plus proche :
+     * - En mode vertical (colonne) : s'aimante sur le bord gauche (conducteur) ou droit (passager)
+     * - En mode horizontal (ligne) : s'aimante en bas (ou en haut), et centre ou cale sur les côtés
+     */
+    private fun snapDockToEdge(animate: Boolean = true) {
+        val displayMetrics = resources.displayMetrics
+        val screenWidth = displayMetrics.widthPixels
+        val screenHeight = displayMetrics.heightPixels
+        val density = displayMetrics.density
+        val marginPx = (10 * density).toInt()
+
+        val viewW = if (dockView?.width ?: 0 > 0) dockView!!.width else 160
+        val viewH = if (dockView?.height ?: 0 > 0) dockView!!.height else 80
+
+        val orientation = prefs.getString(PREF_DOCK_ORIENTATION, ORIENT_HORIZONTAL) ?: ORIENT_HORIZONTAL
+        val isVertical = (orientation == ORIENT_VERTICAL)
+
+        val targetX: Int
+        val targetY: Int
+
+        if (isVertical) {
+            // Mode Colonne : bord gauche (conducteur) ou bord droit (passager)
+            val currentCenterX = layoutParams.x + (viewW / 2)
+            targetX = if (currentCenterX < screenWidth / 2) {
+                marginPx
+            } else {
+                screenWidth - viewW - marginPx
+            }
+
+            // Conserver la hauteur Y choisie par le conducteur, mais cadrée
+            val minY = marginPx
+            val maxY = (screenHeight - viewH - marginPx).coerceAtLeast(minY)
+            val currentY = layoutParams.y
+            targetY = when {
+                currentY < minY + (20 * density) -> minY
+                currentY > maxY - (20 * density) -> maxY
+                else -> currentY.coerceIn(minY, maxY)
+            }
+        } else {
+            // Mode Ligne : bas de l'écran (standard cockpit) ou haut
+            val currentCenterY = layoutParams.y + (viewH / 2)
+            targetY = if (currentCenterY < screenHeight / 2) {
+                marginPx
+            } else {
+                (screenHeight - viewH - marginPx).coerceAtLeast(marginPx)
+            }
+
+            // Gestion de l'alignement horizontal
+            val minX = marginPx
+            val maxX = (screenWidth - viewW - marginPx).coerceAtLeast(minX)
+            val centerX = (screenWidth - viewW) / 2
+            val currentX = layoutParams.x
+
+            targetX = when {
+                // Proche du centre -> aimante au centre parfait
+                Math.abs(currentX - centerX) < (screenWidth * 0.15f) -> centerX
+                // Proche de la gauche -> cale à gauche
+                currentX < minX + (40 * density) -> minX
+                // Proche de la droite -> cale à droite
+                currentX > maxX - (40 * density) -> maxX
+                // Sinon garde la position choisie
+                else -> currentX.coerceIn(minX, maxX)
+            }
+        }
+
+        if (!animate) {
+            layoutParams.x = targetX
+            layoutParams.y = targetY
+            if (dockView != null && dockView!!.isAttachedToWindow) {
+                windowManager.updateViewLayout(dockView, layoutParams)
+            }
+            prefs.edit().putInt(PREF_POS_X, targetX).putInt(PREF_POS_Y, targetY).apply()
+            return
+        }
+
+        animateTo(targetX, targetY)
+    }
+
+    private fun animateTo(targetX: Int, targetY: Int) {
+        snapAnimator?.cancel()
+        val startX = layoutParams.x
+        val startY = layoutParams.y
+
+        if (startX == targetX && startY == targetY) {
+            prefs.edit().putInt(PREF_POS_X, targetX).putInt(PREF_POS_Y, targetY).apply()
+            return
+        }
+
+        snapAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 260
+            interpolator = DecelerateInterpolator(1.6f)
+            addUpdateListener { va ->
+                val fraction = va.animatedFraction
+                layoutParams.x = (startX + (targetX - startX) * fraction).toInt()
+                layoutParams.y = (startY + (targetY - startY) * fraction).toInt()
+                if (dockView != null && dockView!!.isAttachedToWindow) {
+                    windowManager.updateViewLayout(dockView, layoutParams)
+                }
+            }
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    prefs.edit().putInt(PREF_POS_X, targetX).putInt(PREF_POS_Y, targetY).apply()
+                }
+            })
+            start()
+        }
     }
 
     private fun setupRepeatableVolume(button: ImageButton, direction: Int) {
@@ -593,6 +720,7 @@ class CarDockOverlayService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         isServiceRunning = false
+        snapAnimator?.cancel()
         dockView?.let {
             try {
                 windowManager.removeView(it)

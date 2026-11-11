@@ -252,7 +252,63 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Carte 4 : Choix des 2 Options (Option A vs Option B) -->
+        <!-- Carte 4 : Aimantation Intelligente sur les Bords (Snap to Edge) -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="@color/car_surface_dark"
+            app:cardCornerRadius="16dp"
+            app:strokeColor="@color/car_border_dark"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="4. Aimantation Intelligente (Snap to Edge)"
+                            android:textColor="@color/car_accent_amber"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="S'aimante automatiquement au bord le plus proche (gauche/droite en vertical, bas/haut en horizontal) dès que vous relâchez le doigt."
+                            android:textColor="@color/car_text_secondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchSnapToEdge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:checked="true" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Carte 5 : Choix des 2 Options (Option A vs Option B) -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -271,7 +327,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="4. Configuration de l'Écran (Options d'Affichage)"
+                    android:text="5. Configuration de l'Écran (Options d'Affichage)"
                     android:textColor="@color/car_accent_amber"
                     android:textSize="15sp"
                     android:textStyle="bold" />

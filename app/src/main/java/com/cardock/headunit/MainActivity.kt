@@ -35,6 +35,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var radioOptionA: RadioButton
     private lateinit var radioOptionB: RadioButton
 
+    private lateinit var switchSnapToEdge: androidx.appcompat.widget.SwitchCompat
+
     private lateinit var btnStartDock: Button
     private lateinit var btnStopDock: Button
 
@@ -55,6 +57,8 @@ class MainActivity : AppCompatActivity() {
         const val SIZE_MEDIUM = "medium"   // 56dp
         const val SIZE_LARGE = "large"     // 68dp
         const val SIZE_XLARGE = "xlarge"   // 80dp
+
+        const val PREF_SNAP_TO_EDGE = "dock_snap_to_edge"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,6 +97,8 @@ class MainActivity : AppCompatActivity() {
         radioOptionA = findViewById(R.id.radioOptionA)
         radioOptionB = findViewById(R.id.radioOptionB)
 
+        switchSnapToEdge = findViewById(R.id.switchSnapToEdge)
+
         btnStartDock = findViewById(R.id.btnStartDock)
         btnStopDock = findViewById(R.id.btnStopDock)
     }
@@ -114,7 +120,10 @@ class MainActivity : AppCompatActivity() {
             else -> rgButtonSize.check(R.id.radioSizeLarge)
         }
 
-        // 3. Mode Intégration
+        // 3. Aimantation Intelligente (Snap to Edge)
+        switchSnapToEdge.isChecked = prefs.getBoolean(PREF_SNAP_TO_EDGE, true)
+
+        // 4. Mode Intégration
         val currentMode = prefs.getString(PREF_INTEGRATION_MODE, MODE_OPTION_B)
         if (currentMode == MODE_OPTION_A) {
             rgIntegrationMode.check(R.id.radioOptionA)
@@ -172,7 +181,19 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Format de barre : $label", Toast.LENGTH_SHORT).show()
         }
 
-        // 5. Mode Intégration
+        // 5. Aimantation Intelligente (Snap to Edge)
+        switchSnapToEdge.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean(PREF_SNAP_TO_EDGE, isChecked).apply()
+            notifyDockConfigChanged()
+            val msg = if (isChecked) {
+                "Aimantation intelligente activée"
+            } else {
+                "Aimantation désactivée (Position libre)"
+            }
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        }
+
+        // 6. Mode Intégration
         rgIntegrationMode.setOnCheckedChangeListener { _, checkedId ->
             if (checkedId == R.id.radioOptionA) {
                 prefs.edit().putString(PREF_INTEGRATION_MODE, MODE_OPTION_A).apply()
