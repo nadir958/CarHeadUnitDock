@@ -20,6 +20,10 @@ class CarNavAccessibilityService : AccessibilityService() {
         fun goHome(): Boolean {
             return instance?.performGlobalAction(GLOBAL_ACTION_HOME) ?: false
         }
+
+        fun openRecents(): Boolean {
+            return instance?.performGlobalAction(GLOBAL_ACTION_RECENTS) ?: false
+        }
     }
 
     override fun onServiceConnected() {

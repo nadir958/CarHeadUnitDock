@@ -110,7 +110,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Carte 2 : Format du Menu (Horizontal vs Vertical) -->
+        <!-- Carte 2 : Style de la Barre (Dédiée Tesla vs Îlot Flottant) -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -129,7 +129,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="2. Format du Menu Flottant"
+                    android:text="2. Style d'Affichage de la Barre"
                     android:textColor="@color/car_accent_amber"
                     android:textSize="15sp"
                     android:textStyle="bold" />
@@ -138,7 +138,84 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Choisissez l'orientation de la barre flottante selon votre cockpit :"
+                    android:text="Choisissez l'expérience visuelle souhaitée dans votre véhicule :"
+                    android:textColor="@color/car_text_secondary"
+                    android:textSize="12sp" />
+
+                <RadioGroup
+                    android:id="@+id/rgDockStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp">
+
+                    <RadioButton
+                        android:id="@+id/radioStyleDedicated"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/car_accent_amber"
+                        android:text="Barre Dédiée Ancrée (Style Tesla / OEM) — Recommandé"
+                        android:textColor="@color/car_text_primary"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="32dp"
+                        android:text="Bandeau complet pleine largeur en bas (ou pleine hauteur à gauche). Boutons répartis aux extrémités et espace utile réservé pour ne rien masquer du GPS."
+                        android:textColor="@color/car_text_muted"
+                        android:textSize="11sp" />
+
+                    <RadioButton
+                        android:id="@+id/radioStyleFloating"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:buttonTint="@color/car_accent_amber"
+                        android:text="Îlot Flottant Mobile"
+                        android:textColor="@color/car_text_primary"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="32dp"
+                        android:text="Capsule compacte déplaçable au doigt n'importe où sur l'écran avec poignée tactile et aimantation sur les bords."
+                        android:textColor="@color/car_text_muted"
+                        android:textSize="11sp" />
+                </RadioGroup>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Carte 3 : Format de la Barre (Horizontal vs Vertical) -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="@color/car_surface_dark"
+            app:cardCornerRadius="16dp"
+            app:strokeColor="@color/car_border_dark"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="3. Emplacement / Orientation de la Barre"
+                    android:textColor="@color/car_accent_amber"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Choisissez l'orientation de la barre selon votre cockpit :"
                     android:textColor="@color/car_text_secondary"
                     android:textSize="12sp" />
 
@@ -153,7 +230,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:buttonTint="@color/car_accent_amber"
-                        android:text="Horizontal (En ligne — Recommandé en bas ou haut)"
+                        android:text="Horizontal (En bas de l'écran — Style Tesla)"
                         android:textColor="@color/car_text_primary"
                         android:textSize="13sp" />
 
@@ -163,7 +240,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:buttonTint="@color/car_accent_amber"
-                        android:text="Vertical (En colonne — Côté conducteur gauche ou droit)"
+                        android:text="Vertical (Bord gauche — Style CarPlay Côté Conducteur)"
                         android:textColor="@color/car_text_primary"
                         android:textSize="13sp" />
                 </RadioGroup>
@@ -171,7 +248,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Carte 3 : Taille Globale de la Barre Flottante -->
+        <!-- Carte 4 : Taille Globale de la Barre -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -190,7 +267,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="3. Taille Globale de la Barre Flottante"
+                    android:text="4. Taille Globale de la Barre"
                     android:textColor="@color/car_accent_amber"
                     android:textSize="15sp"
                     android:textStyle="bold" />
@@ -283,7 +360,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="4. Aimantation Intelligente (Snap to Edge)"
+                            android:text="5. Aimantation Intelligente (Mode Flottant)"
                             android:textColor="@color/car_accent_amber"
                             android:textSize="15sp"
                             android:textStyle="bold" />
@@ -327,7 +404,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="5. Configuration de l'Écran (Options d'Affichage)"
+                    android:text="6. Configuration de l'Écran (Options d'Affichage)"
                     android:textColor="@color/car_accent_amber"
                     android:textSize="15sp"
                     android:textStyle="bold" />

@@ -11,8 +11,8 @@ android {
         applicationId = "com.cardock.headunit"
         minSdk = 26 // Android 8.0 Oreo (compatible with almost all headunits)
         targetSdk = 33
-        versionCode = 4
-        versionName = "1.3.0"
+        versionCode = 5
+        versionName = "1.4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -44,7 +44,9 @@ class CarDockOverlayService : Service() {
     private lateinit var dragHandle: ImageView
     private lateinit var btnBack: ImageButton
     private lateinit var btnHome: ImageButton
+    private lateinit var btnRecents: ImageButton
     private lateinit var dockSeparator: View
+    private lateinit var dockCenterSpacer: View
     private lateinit var btnMute: ImageButton
     private lateinit var btnVolDown: ImageButton
     private lateinit var btnVolUp: ImageButton
@@ -55,7 +57,7 @@ class CarDockOverlayService : Service() {
     private var currentButtonRadiusPx = 18f
     private var snapAnimator: ValueAnimator? = null
 
-    // Variables pour le déplacement tactile fluide
+    // Variables pour le déplacement tactile fluide (mode flottant)
     private var initialX = 0
     private var initialY = 0
     private var initialTouchX = 0f
@@ -68,6 +70,10 @@ class CarDockOverlayService : Service() {
         const val PREF_POS_X = "dock_pos_x"
         const val PREF_POS_Y = "dock_pos_y"
 
+        const val PREF_DOCK_STYLE = "dock_style"
+        const val STYLE_DEDICATED = "dedicated" // Barre Dédiée Ancrée (Style Tesla)
+        const val STYLE_FLOATING = "floating"   // Îlot Flottant Mobile
+
         const val PREF_DOCK_ORIENTATION = "dock_orientation"
         const val ORIENT_HORIZONTAL = "horizontal"
         const val ORIENT_VERTICAL = "vertical"
@@ -79,6 +85,9 @@ class CarDockOverlayService : Service() {
         const val SIZE_XLARGE = "xlarge"
 
         const val PREF_SNAP_TO_EDGE = "dock_snap_to_edge"
+        const val PREF_INTEGRATION_MODE = "integration_mode"
+        const val MODE_OPTION_A = "option_a"
+        const val MODE_OPTION_B = "option_b"
 
         const val ACTION_UPDATE_CONFIG = "com.cardock.headunit.ACTION_UPDATE_CONFIG"
         var isServiceRunning = false
@@ -147,7 +156,6 @@ class CarDockOverlayService : Service() {
         val screenWidth = displayMetrics.widthPixels
         val screenHeight = displayMetrics.heightPixels
 
-        // Position par défaut centrée en bas
         val defaultX = (screenWidth - (380 * density).toInt()) / 2
         val defaultY = screenHeight - (80 * density).toInt() - (16 * density).toInt()
 
@@ -183,7 +191,9 @@ class CarDockOverlayService : Service() {
         dragHandle = view.findViewById(R.id.dragHandle)
         btnBack = view.findViewById(R.id.btnBack)
         btnHome = view.findViewById(R.id.btnHome)
+        btnRecents = view.findViewById(R.id.btnRecents)
         dockSeparator = view.findViewById(R.id.dockSeparator)
+        dockCenterSpacer = view.findViewById(R.id.dockCenterSpacer)
         btnMute = view.findViewById(R.id.btnMute)
         btnVolDown = view.findViewById(R.id.btnVolDown)
         btnVolUp = view.findViewById(R.id.btnVolUp)
@@ -197,7 +207,7 @@ class CarDockOverlayService : Service() {
         // 2. Action ACCUEIL (HOME)
         btnHome.setOnClickListener {
             val handled = CarNavAccessibilityService.goHome()
-            android.util.Log.d("CarDockOverlayService", "btnHome clicked, handled by accessibility=$handled")
+            android.util.Log.d("CarDockOverlayService", "btnHome clicked, handled=$handled")
             if (!handled) {
                 val homeIntent = Intent(Intent.ACTION_MAIN).apply {
                     addCategory(Intent.CATEGORY_HOME)
@@ -207,39 +217,50 @@ class CarDockOverlayService : Service() {
             }
         }
 
-        // 3. Action MUTE
+        // 3. Action RÉCENTS / MULTITÂCHE
+        btnRecents.setOnClickListener {
+            val handled = CarNavAccessibilityService.openRecents()
+            android.util.Log.d("CarDockOverlayService", "btnRecents clicked, handled=$handled")
+        }
+
+        // 4. Action MUTE
         btnMute.setOnClickListener {
             toggleMute()
         }
 
-        // 4. Action VOLUME MOINS (Clic court ou appui prolongé)
+        // 5. Action VOLUME MOINS (Clic court ou appui prolongé)
         setupRepeatableVolume(btnVolDown, AudioManager.ADJUST_LOWER)
 
-        // 5. Action VOLUME PLUS (Clic court ou appui prolongé)
+        // 6. Action VOLUME PLUS (Clic court ou appui prolongé)
         setupRepeatableVolume(btnVolUp, AudioManager.ADJUST_RAISE)
     }
 
     /**
-     * Applique une mise à l'échelle harmonieuse et proportionnelle de toute la barre :
-     * conteneur capsule, poignée tactile de déplacement, boutons en squircle parfait,
-     * séparateur et marges équilibrées.
+     * Configure le mode d'affichage de la barre :
+     * - Mode Barre Dédiée (Style Tesla / OEM) : bandeau ancré pleine largeur en bas (ou pleine hauteur à gauche)
+     *   avec boutons répartis et redimensionnement d'écran automatique pour le GPS.
+     * - Mode Îlot Flottant : capsule arrondie compacte avec poignée tactile de déplacement.
      */
     private fun applyDockConfiguration() {
         val density = resources.displayMetrics.density
+        val dockStyle = prefs.getString(PREF_DOCK_STYLE, STYLE_DEDICATED) ?: STYLE_DEDICATED
         val orientation = prefs.getString(PREF_DOCK_ORIENTATION, ORIENT_HORIZONTAL) ?: ORIENT_HORIZONTAL
         val sizePref = prefs.getString(PREF_DOCK_SIZE, SIZE_LARGE) ?: SIZE_LARGE
+
+        val isVertical = (orientation == ORIENT_VERTICAL)
+        val isDedicated = (dockStyle == STYLE_DEDICATED)
 
         val preset = when (sizePref) {
             SIZE_COMPACT -> DockPreset(
                 buttonSizeDp = 42,
                 dragBreadthDp = 28,
                 padLateralDp = 10,
-                padCrossDp = 7,
+                padCrossDp = 6,
                 spacingDp = 6,
                 iconPaddingDp = 9
             )
             SIZE_MEDIUM -> DockPreset(
-                buttonSizeDp = 52,
+                buttonSizeDp = 50,
                 dragBreadthDp = 34,
                 padLateralDp = 12,
                 padCrossDp = 8,
@@ -247,84 +268,34 @@ class CarDockOverlayService : Service() {
                 iconPaddingDp = 11
             )
             SIZE_XLARGE -> DockPreset(
-                buttonSizeDp = 72,
+                buttonSizeDp = 68,
                 dragBreadthDp = 46,
                 padLateralDp = 16,
-                padCrossDp = 12,
-                spacingDp = 11,
-                iconPaddingDp = 15
+                padCrossDp = 11,
+                spacingDp = 10,
+                iconPaddingDp = 14
             )
             else -> DockPreset( // SIZE_LARGE (Grand - Recommandé Tablette Voiture)
-                buttonSizeDp = 60,
+                buttonSizeDp = 58,
                 dragBreadthDp = 38,
                 padLateralDp = 14,
-                padCrossDp = 10,
-                spacingDp = 9,
-                iconPaddingDp = 13
+                padCrossDp = 9,
+                spacingDp = 8,
+                iconPaddingDp = 12
             )
         }
 
         val btnSizePx = (preset.buttonSizeDp * density).toInt()
         val dragBreadthPx = (preset.dragBreadthDp * density).toInt()
-        val padLateralPx = (preset.padLateralDp * density).toInt()
-        val padCrossPx = (preset.padCrossDp * density).toInt()
         val spacingPx = (preset.spacingDp * density).toInt()
         val iconPaddingPx = (preset.iconPaddingDp * density).toInt()
+        val barThicknessPx = btnSizePx + ((preset.padCrossDp * 2) * density).toInt()
 
-        // Rayon de courbure proportionnel (Squircle 30%)
-        currentButtonRadiusPx = btnSizePx * 0.30f
+        // Rayon de courbure proportionnel pour les boutons squircles (28%)
+        currentButtonRadiusPx = btnSizePx * 0.28f
         val strokeWidthPx = (1.2f * density).toInt().coerceAtLeast(1)
 
-        val isVertical = (orientation == ORIENT_VERTICAL)
-
-        // 1. Configuration de l'orientation du conteneur
-        container.orientation = if (isVertical) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
-
-        // 2. Padding interne du conteneur
-        if (isVertical) {
-            container.setPadding(padCrossPx, padLateralPx, padCrossPx, padLateralPx)
-        } else {
-            container.setPadding(padLateralPx, padCrossPx, padLateralPx, padCrossPx)
-        }
-
-        // 3. Fond capsule du conteneur flottant (Courbure continue sur toute la hauteur)
-        val crossAxisSize = btnSizePx + (padCrossPx * 2)
-        val capsuleRadius = crossAxisSize / 2f
-        val capsuleBg = GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            setColor(Color.parseColor("#F00A0E17")) // Noir profond automobile 94%
-            cornerRadius = capsuleRadius
-            setStroke((1.5f * density).toInt().coerceAtLeast(1), Color.parseColor("#2E3D52"))
-        }
-        container.background = capsuleBg
-
-        // 4. Poignée de déplacement tactile (Bouton de déplacement dédié)
-        val dragHandleBg = createRippleSquircle(
-            fillColor = Color.parseColor("#131B28"),
-            strokeColor = Color.parseColor("#273547"),
-            strokeWidthPx = strokeWidthPx,
-            rippleColor = Color.parseColor("#344863"),
-            radiusPx = currentButtonRadiusPx
-        )
-        dragHandle.background = dragHandleBg
-        dragHandle.rotation = 0f
-        dragHandle.setPadding((6 * density).toInt(), (6 * density).toInt(), (6 * density).toInt(), (6 * density).toInt())
-
-        if (isVertical) {
-            dragHandle.setImageResource(R.drawable.ic_drag_handle_vertical)
-            dragHandle.layoutParams = LinearLayout.LayoutParams(btnSizePx, dragBreadthPx).apply {
-                gravity = Gravity.CENTER_HORIZONTAL
-                bottomMargin = spacingPx
-            }
-        } else {
-            dragHandle.setImageResource(R.drawable.ic_drag_handle_horizontal)
-            dragHandle.layoutParams = LinearLayout.LayoutParams(dragBreadthPx, btnSizePx).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginEnd = spacingPx
-            }
-        }
-
-        // 5. Stylisation et dimensionnement des boutons
+        // Styliser tous les boutons d'actions
         val normalBtnBgSupplier = {
             createRippleSquircle(
                 fillColor = Color.parseColor("#182232"),
@@ -335,112 +306,301 @@ class CarDockOverlayService : Service() {
             )
         }
 
-        val buttons = listOf(btnBack, btnHome, btnVolDown, btnVolUp)
-        for (btn in buttons) {
+        val actionButtons = listOf(btnBack, btnHome, btnRecents, btnVolDown, btnVolUp)
+        for (btn in actionButtons) {
             btn.background = normalBtnBgSupplier()
             btn.setPadding(iconPaddingPx, iconPaddingPx, iconPaddingPx, iconPaddingPx)
             btn.scaleType = ImageView.ScaleType.FIT_CENTER
         }
-
         btnMute.setPadding(iconPaddingPx, iconPaddingPx, iconPaddingPx, iconPaddingPx)
         btnMute.scaleType = ImageView.ScaleType.FIT_CENTER
         updateMuteStateVisual()
 
-        // 6. Disposition des boutons et du séparateur selon l'orientation
-        val sepThicknessPx = (2f * density).toInt().coerceAtLeast(1)
-        val sepLengthPx = (btnSizePx * 0.52f).toInt()
-        val sepDrawable = GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            setColor(Color.parseColor("#2E3D52"))
-            cornerRadius = (1.5f * density)
-        }
-        dockSeparator.background = sepDrawable
+        if (isDedicated) {
+            // =========================================================================
+            // MODE BARRE DÉDIÉE ANCRÉE (STYLE TESLA / OEM)
+            // =========================================================================
+            dragHandle.visibility = View.GONE
+            dockSeparator.visibility = View.GONE
+            dockCenterSpacer.visibility = View.VISIBLE
 
-        if (isVertical) {
-            btnBack.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
-                gravity = Gravity.CENTER_HORIZONTAL
-                bottomMargin = spacingPx
-            }
-            btnHome.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
-                gravity = Gravity.CENTER_HORIZONTAL
-                bottomMargin = spacingPx
+            if (isVertical) {
+                // Style CarPlay : Bandeau vertical pleine hauteur côté conducteur
+                container.orientation = LinearLayout.VERTICAL
+                container.setPadding(0, (14 * density).toInt(), 0, (14 * density).toInt())
+
+                val barBg = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    setColor(Color.parseColor("#090D16"))
+                    cornerRadius = 0f
+                    setStroke((1f * density).toInt().coerceAtLeast(1), Color.parseColor("#1E293B"))
+                }
+                container.background = barBg
+
+                // Boutons de navigation (en haut)
+                btnBack.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    bottomMargin = spacingPx
+                }
+                btnHome.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    bottomMargin = spacingPx
+                }
+                btnRecents.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    bottomMargin = 0
+                }
+
+                // Espaceur central flexible
+                dockCenterSpacer.layoutParams = LinearLayout.LayoutParams(0, 0, 1.0f)
+
+                // Boutons multimédia / audio (en bas)
+                btnMute.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    bottomMargin = spacingPx
+                }
+                btnVolDown.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    bottomMargin = spacingPx
+                }
+                btnVolUp.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    bottomMargin = 0
+                }
+
+                // WindowManager : Ancrée sur toute la hauteur à gauche
+                layoutParams.gravity = Gravity.START or Gravity.TOP
+                layoutParams.width = barThicknessPx
+                layoutParams.height = WindowManager.LayoutParams.MATCH_PARENT
+                layoutParams.x = 0
+                layoutParams.y = 0
+
+                // Réserver l'espace d'affichage pour les applications
+                DisplayResizeManager.applyInsets(this, leftPx = barThicknessPx)
+            } else {
+                // Style Tesla : Bandeau horizontal pleine largeur tout en bas
+                container.orientation = LinearLayout.HORIZONTAL
+                container.setPadding((16 * density).toInt(), 0, (16 * density).toInt(), 0)
+
+                val barBg = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    setColor(Color.parseColor("#090D16"))
+                    cornerRadius = 0f
+                    setStroke((1f * density).toInt().coerceAtLeast(1), Color.parseColor("#1E293B"))
+                }
+                container.background = barBg
+
+                // Boutons de navigation (à gauche)
+                btnBack.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                    marginEnd = spacingPx
+                }
+                btnHome.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                    marginEnd = spacingPx
+                }
+                btnRecents.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                    marginEnd = 0
+                }
+
+                // Espaceur central flexible (pousse les contrôles aux deux extrémités)
+                dockCenterSpacer.layoutParams = LinearLayout.LayoutParams(0, 0, 1.0f)
+
+                // Boutons multimédia / audio (à droite)
+                btnMute.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                    marginEnd = spacingPx
+                }
+                btnVolDown.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                    marginEnd = spacingPx
+                }
+                btnVolUp.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                    marginEnd = 0
+                }
+
+                // WindowManager : Ancrée sur toute la largeur en bas
+                layoutParams.gravity = Gravity.BOTTOM or Gravity.START
+                layoutParams.width = WindowManager.LayoutParams.MATCH_PARENT
+                layoutParams.height = barThicknessPx
+                layoutParams.x = 0
+                layoutParams.y = 0
+
+                // Réserver l'espace d'affichage pour les applications
+                DisplayResizeManager.applyInsets(this, bottomPx = barThicknessPx)
             }
 
-            dockSeparator.layoutParams = LinearLayout.LayoutParams(sepLengthPx, sepThicknessPx).apply {
-                gravity = Gravity.CENTER_HORIZONTAL
-                topMargin = (spacingPx / 2)
-                bottomMargin = spacingPx
-            }
-
-            btnMute.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
-                gravity = Gravity.CENTER_HORIZONTAL
-                bottomMargin = spacingPx
-            }
-            btnVolDown.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
-                gravity = Gravity.CENTER_HORIZONTAL
-                bottomMargin = spacingPx
-            }
-            btnVolUp.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
-                gravity = Gravity.CENTER_HORIZONTAL
-                bottomMargin = 0
-            }
         } else {
-            btnBack.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginEnd = spacingPx
-            }
-            btnHome.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginEnd = spacingPx
+            // =========================================================================
+            // MODE ÎLOT FLOTTANT MOBILE (AVEC POIGNÉE TACTILE ET COINS CAPSULE)
+            // =========================================================================
+            dragHandle.visibility = View.VISIBLE
+            dockSeparator.visibility = View.VISIBLE
+            dockCenterSpacer.visibility = View.GONE
+
+            val padLateralPx = (preset.padLateralDp * density).toInt()
+            val padCrossPx = (preset.padCrossDp * density).toInt()
+
+            container.orientation = if (isVertical) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+            if (isVertical) {
+                container.setPadding(padCrossPx, padLateralPx, padCrossPx, padLateralPx)
+            } else {
+                container.setPadding(padLateralPx, padCrossPx, padLateralPx, padCrossPx)
             }
 
-            dockSeparator.layoutParams = LinearLayout.LayoutParams(sepThicknessPx, sepLengthPx).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginEnd = spacingPx
+            // Fond capsule arrondi fluide
+            val crossAxisSize = btnSizePx + (padCrossPx * 2)
+            val capsuleRadius = crossAxisSize / 2f
+            val capsuleBg = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                setColor(Color.parseColor("#F00A0E17"))
+                cornerRadius = capsuleRadius
+                setStroke((1.5f * density).toInt().coerceAtLeast(1), Color.parseColor("#2E3D52"))
+            }
+            container.background = capsuleBg
+
+            // Poignée de déplacement tactile
+            val dragHandleBg = createRippleSquircle(
+                fillColor = Color.parseColor("#131B28"),
+                strokeColor = Color.parseColor("#273547"),
+                strokeWidthPx = strokeWidthPx,
+                rippleColor = Color.parseColor("#344863"),
+                radiusPx = currentButtonRadiusPx
+            )
+            dragHandle.background = dragHandleBg
+            dragHandle.setPadding((6 * density).toInt(), (6 * density).toInt(), (6 * density).toInt(), (6 * density).toInt())
+
+            val sepThicknessPx = (2f * density).toInt().coerceAtLeast(1)
+            val sepLengthPx = (btnSizePx * 0.52f).toInt()
+            val sepDrawable = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                setColor(Color.parseColor("#2E3D52"))
+                cornerRadius = (1.5f * density)
+            }
+            dockSeparator.background = sepDrawable
+
+            if (isVertical) {
+                dragHandle.setImageResource(R.drawable.ic_drag_handle_vertical)
+                dragHandle.layoutParams = LinearLayout.LayoutParams(btnSizePx, dragBreadthPx).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    bottomMargin = spacingPx
+                }
+
+                btnBack.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    bottomMargin = spacingPx
+                }
+                btnHome.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    bottomMargin = spacingPx
+                }
+                btnRecents.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    bottomMargin = spacingPx
+                }
+
+                dockSeparator.layoutParams = LinearLayout.LayoutParams(sepLengthPx, sepThicknessPx).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    topMargin = (spacingPx / 2)
+                    bottomMargin = spacingPx
+                }
+
+                btnMute.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    bottomMargin = spacingPx
+                }
+                btnVolDown.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    bottomMargin = spacingPx
+                }
+                btnVolUp.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    bottomMargin = 0
+                }
+            } else {
+                dragHandle.setImageResource(R.drawable.ic_drag_handle_horizontal)
+                dragHandle.layoutParams = LinearLayout.LayoutParams(dragBreadthPx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                    marginEnd = spacingPx
+                }
+
+                btnBack.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                    marginEnd = spacingPx
+                }
+                btnHome.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                    marginEnd = spacingPx
+                }
+                btnRecents.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                    marginEnd = spacingPx
+                }
+
+                dockSeparator.layoutParams = LinearLayout.LayoutParams(sepThicknessPx, sepLengthPx).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                    marginEnd = spacingPx
+                }
+
+                btnMute.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                    marginEnd = spacingPx
+                }
+                btnVolDown.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                    marginEnd = spacingPx
+                }
+                btnVolUp.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                    marginEnd = 0
+                }
             }
 
-            btnMute.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginEnd = spacingPx
+            // WindowManager layout params pour îlot flottant
+            val displayMetrics = resources.displayMetrics
+            val screenWidth = displayMetrics.widthPixels
+            val screenHeight = displayMetrics.heightPixels
+
+            val totalBreadthPx = (padLateralPx * 2) + dragBreadthPx + (6 * btnSizePx) + (7 * spacingPx) + sepThicknessPx
+            val totalCrossPx = btnSizePx + (padCrossPx * 2)
+
+            val estimatedW = if (isVertical) totalCrossPx else totalBreadthPx
+            val estimatedH = if (isVertical) totalBreadthPx else totalCrossPx
+
+            layoutParams.gravity = Gravity.TOP or Gravity.START
+            layoutParams.width = WindowManager.LayoutParams.WRAP_CONTENT
+            layoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT
+            layoutParams.x = layoutParams.x.coerceIn(0, (screenWidth - estimatedW).coerceAtLeast(0))
+            layoutParams.y = layoutParams.y.coerceIn(0, (screenHeight - estimatedH).coerceAtLeast(0))
+
+            // Rétablir ou appliquer selon l'option choisie
+            val integrationMode = prefs.getString(PREF_INTEGRATION_MODE, MODE_OPTION_B)
+            if (integrationMode == MODE_OPTION_A) {
+                DisplayResizeManager.resetInsets()
+            } else {
+                DisplayResizeManager.applyOptionB(this, (50 * density).toInt())
             }
-            btnVolDown.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginEnd = spacingPx
-            }
-            btnVolUp.layoutParams = LinearLayout.LayoutParams(btnSizePx, btnSizePx).apply {
-                gravity = Gravity.CENTER_VERTICAL
-                marginEnd = 0
+
+            val snapEnabled = prefs.getBoolean(PREF_SNAP_TO_EDGE, true)
+            if (snapEnabled && dockView != null && dockView!!.isAttachedToWindow) {
+                snapDockToEdge(animate = false)
             }
         }
-
-        // 7. Recalcul et repositionnement précis de la fenêtre de superposition
-        val displayMetrics = resources.displayMetrics
-        val screenWidth = displayMetrics.widthPixels
-        val screenHeight = displayMetrics.heightPixels
-
-        val totalBreadthPx = (padLateralPx * 2) + dragBreadthPx + (5 * btnSizePx) + (6 * spacingPx) + sepThicknessPx
-        val totalCrossPx = btnSizePx + (padCrossPx * 2)
-
-        val estimatedW = if (isVertical) totalCrossPx else totalBreadthPx
-        val estimatedH = if (isVertical) totalBreadthPx else totalCrossPx
-
-        layoutParams.width = WindowManager.LayoutParams.WRAP_CONTENT
-        layoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT
-        layoutParams.x = layoutParams.x.coerceIn(0, (screenWidth - estimatedW).coerceAtLeast(0))
-        layoutParams.y = layoutParams.y.coerceIn(0, (screenHeight - estimatedH).coerceAtLeast(0))
 
         if (dockView != null && dockView!!.isAttachedToWindow) {
             windowManager.updateViewLayout(dockView, layoutParams)
-        }
-
-        val snapEnabled = prefs.getBoolean(PREF_SNAP_TO_EDGE, true)
-        if (snapEnabled && dockView != null && dockView!!.isAttachedToWindow) {
-            snapDockToEdge(animate = false)
         }
     }
 
     private fun setupDragListener() {
         val onTouchDrag = View.OnTouchListener { v, event ->
+            val dockStyle = prefs.getString(PREF_DOCK_STYLE, STYLE_DEDICATED) ?: STYLE_DEDICATED
+            if (dockStyle == STYLE_DEDICATED) {
+                return@OnTouchListener false
+            }
+
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     snapAnimator?.cancel()
@@ -488,11 +648,6 @@ class CarDockOverlayService : Service() {
         dragHandle.setOnTouchListener(onTouchDrag)
     }
 
-    /**
-     * Aimantation intelligente au bord de l'écran le plus proche :
-     * - En mode vertical (colonne) : s'aimante sur le bord gauche (conducteur) ou droit (passager)
-     * - En mode horizontal (ligne) : s'aimante en bas (ou en haut), et centre ou cale sur les côtés
-     */
     private fun snapDockToEdge(animate: Boolean = true) {
         val displayMetrics = resources.displayMetrics
         val screenWidth = displayMetrics.widthPixels
@@ -510,7 +665,6 @@ class CarDockOverlayService : Service() {
         val targetY: Int
 
         if (isVertical) {
-            // Mode Colonne : bord gauche (conducteur) ou bord droit (passager)
             val currentCenterX = layoutParams.x + (viewW / 2)
             targetX = if (currentCenterX < screenWidth / 2) {
                 marginPx
@@ -518,7 +672,6 @@ class CarDockOverlayService : Service() {
                 screenWidth - viewW - marginPx
             }
 
-            // Conserver la hauteur Y choisie par le conducteur, mais cadrée
             val minY = marginPx
             val maxY = (screenHeight - viewH - marginPx).coerceAtLeast(minY)
             val currentY = layoutParams.y
@@ -528,7 +681,6 @@ class CarDockOverlayService : Service() {
                 else -> currentY.coerceIn(minY, maxY)
             }
         } else {
-            // Mode Ligne : bas de l'écran (standard cockpit) ou haut
             val currentCenterY = layoutParams.y + (viewH / 2)
             targetY = if (currentCenterY < screenHeight / 2) {
                 marginPx
@@ -536,20 +688,15 @@ class CarDockOverlayService : Service() {
                 (screenHeight - viewH - marginPx).coerceAtLeast(marginPx)
             }
 
-            // Gestion de l'alignement horizontal
             val minX = marginPx
             val maxX = (screenWidth - viewW - marginPx).coerceAtLeast(minX)
             val centerX = (screenWidth - viewW) / 2
             val currentX = layoutParams.x
 
             targetX = when {
-                // Proche du centre -> aimante au centre parfait
                 Math.abs(currentX - centerX) < (screenWidth * 0.15f) -> centerX
-                // Proche de la gauche -> cale à gauche
                 currentX < minX + (40 * density) -> minX
-                // Proche de la droite -> cale à droite
                 currentX > maxX - (40 * density) -> maxX
-                // Sinon garde la position choisie
                 else -> currentX.coerceIn(minX, maxX)
             }
         }
@@ -721,6 +868,7 @@ class CarDockOverlayService : Service() {
         super.onDestroy()
         isServiceRunning = false
         snapAnimator?.cancel()
+        DisplayResizeManager.resetInsets()
         dockView?.let {
             try {
                 windowManager.removeView(it)

@@ -6,7 +6,7 @@
     android:gravity="center"
     android:orientation="horizontal">
 
-    <!-- Bouton / Poignée de déplacement tactile dédiée -->
+    <!-- Poignée de déplacement tactile (visible uniquement en mode îlot flottant) -->
     <ImageView
         android:id="@+id/dragHandle"
         android:layout_width="38dp"
@@ -35,14 +35,30 @@
         android:scaleType="fitCenter"
         android:src="@drawable/ic_home" />
 
-    <!-- Séparateur fin -->
+    <!-- 3. Bouton RÉCENTS / MULTITÂCHE -->
+    <ImageButton
+        android:id="@+id/btnRecents"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:contentDescription="Applications Récentes"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_recents" />
+
+    <!-- Séparateur fin (mode flottant) -->
     <View
         android:id="@+id/dockSeparator"
         android:layout_width="2dp"
         android:layout_height="30dp"
         android:background="#2E3D52" />
 
-    <!-- 3. Bouton SOURDINE (MUTE) -->
+    <!-- Espaceur central dynamique (pousse les boutons aux deux extrémités en mode barre dédiée Tesla) -->
+    <View
+        android:id="@+id/dockCenterSpacer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
+
+    <!-- 4. Bouton SOURDINE (MUTE) -->
     <ImageButton
         android:id="@+id/btnMute"
         android:layout_width="60dp"
@@ -51,7 +67,7 @@
         android:scaleType="fitCenter"
         android:src="@drawable/ic_mute" />
 
-    <!-- 4. Bouton VOLUME MOINS -->
+    <!-- 5. Bouton VOLUME MOINS -->
     <ImageButton
         android:id="@+id/btnVolDown"
         android:layout_width="60dp"
@@ -60,7 +76,7 @@
         android:scaleType="fitCenter"
         android:src="@drawable/ic_volume_down" />
 
-    <!-- 5. Bouton VOLUME PLUS -->
+    <!-- 6. Bouton VOLUME PLUS -->
     <ImageButton
         android:id="@+id/btnVolUp"
         android:layout_width="60dp"

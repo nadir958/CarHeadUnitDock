@@ -21,6 +21,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var txtStatusAccessibility: TextView
     private lateinit var btnGrantAccessibility: Button
 
+    private lateinit var rgDockStyle: RadioGroup
+    private lateinit var radioStyleDedicated: RadioButton
+    private lateinit var radioStyleFloating: RadioButton
+
     private lateinit var rgMenuOrientation: RadioGroup
     private lateinit var radioOrientHorizontal: RadioButton
     private lateinit var radioOrientVertical: RadioButton
@@ -44,6 +48,10 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val PREFS_NAME = "car_dock_prefs"
+        const val PREF_DOCK_STYLE = "dock_style"
+        const val STYLE_DEDICATED = "dedicated" // Barre Dédiée Ancrée (Style Tesla)
+        const val STYLE_FLOATING = "floating"   // Îlot Flottant Mobile
+
         const val PREF_INTEGRATION_MODE = "integration_mode"
         const val MODE_OPTION_A = "option_a" // Superposition
         const val MODE_OPTION_B = "option_b" // Redimensionnement d'écran
@@ -83,6 +91,10 @@ class MainActivity : AppCompatActivity() {
         txtStatusAccessibility = findViewById(R.id.txtStatusAccessibility)
         btnGrantAccessibility = findViewById(R.id.btnGrantAccessibility)
 
+        rgDockStyle = findViewById(R.id.rgDockStyle)
+        radioStyleDedicated = findViewById(R.id.radioStyleDedicated)
+        radioStyleFloating = findViewById(R.id.radioStyleFloating)
+
         rgMenuOrientation = findViewById(R.id.rgMenuOrientation)
         radioOrientHorizontal = findViewById(R.id.radioOrientHorizontal)
         radioOrientVertical = findViewById(R.id.radioOrientVertical)
@@ -104,7 +116,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadSavedPreferences() {
-        // 1. Format Orientation
+        // 1. Style de barre (Dédiée Tesla vs Îlot Flottant)
+        val style = prefs.getString(PREF_DOCK_STYLE, STYLE_DEDICATED)
+        if (style == STYLE_FLOATING) {
+            rgDockStyle.check(R.id.radioStyleFloating)
+        } else {
+            rgDockStyle.check(R.id.radioStyleDedicated)
+        }
+
+        // 2. Format Orientation
         val orientation = prefs.getString(PREF_DOCK_ORIENTATION, ORIENT_HORIZONTAL)
         if (orientation == ORIENT_VERTICAL) {
             rgMenuOrientation.check(R.id.radioOrientVertical)
@@ -112,7 +132,7 @@ class MainActivity : AppCompatActivity() {
             rgMenuOrientation.check(R.id.radioOrientHorizontal)
         }
 
-        // 2. Taille des boutons
+        // 3. Taille des boutons
         when (prefs.getString(PREF_DOCK_SIZE, SIZE_LARGE)) {
             SIZE_COMPACT -> rgButtonSize.check(R.id.radioSizeCompact)
             SIZE_MEDIUM -> rgButtonSize.check(R.id.radioSizeMedium)
@@ -120,10 +140,10 @@ class MainActivity : AppCompatActivity() {
             else -> rgButtonSize.check(R.id.radioSizeLarge)
         }
 
-        // 3. Aimantation Intelligente (Snap to Edge)
+        // 4. Aimantation Intelligente (Snap to Edge)
         switchSnapToEdge.isChecked = prefs.getBoolean(PREF_SNAP_TO_EDGE, true)
 
-        // 4. Mode Intégration
+        // 5. Mode Intégration
         val currentMode = prefs.getString(PREF_INTEGRATION_MODE, MODE_OPTION_B)
         if (currentMode == MODE_OPTION_A) {
             rgIntegrationMode.check(R.id.radioOptionA)
@@ -153,7 +173,16 @@ class MainActivity : AppCompatActivity() {
             ).show()
         }
 
-        // 3. Format du Menu (Horizontal vs Vertical)
+        // 3. Style de Barre (Dédiée Tesla vs Îlot Flottant)
+        rgDockStyle.setOnCheckedChangeListener { _, checkedId ->
+            val newStyle = if (checkedId == R.id.radioStyleFloating) STYLE_FLOATING else STYLE_DEDICATED
+            prefs.edit().putString(PREF_DOCK_STYLE, newStyle).apply()
+            notifyDockConfigChanged()
+            val label = if (newStyle == STYLE_DEDICATED) "Barre Dédiée Ancrée (Style Tesla)" else "Îlot Flottant Mobile"
+            Toast.makeText(this, "Style choisi : $label", Toast.LENGTH_SHORT).show()
+        }
+
+        // 4. Format du Menu (Horizontal vs Vertical)
         rgMenuOrientation.setOnCheckedChangeListener { _, checkedId ->
             val newOrient = if (checkedId == R.id.radioOrientVertical) ORIENT_VERTICAL else ORIENT_HORIZONTAL
             prefs.edit().putString(PREF_DOCK_ORIENTATION, newOrient).apply()
