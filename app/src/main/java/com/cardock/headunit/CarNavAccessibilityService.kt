@@ -1,7 +1,10 @@
 package com.cardock.headunit
 
 import android.accessibilityservice.AccessibilityService
+import android.content.Context
 import android.content.Intent
+import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 
@@ -30,10 +33,30 @@ class CarNavAccessibilityService : AccessibilityService() {
         super.onServiceConnected()
         instance = this
         Log.d(TAG, "CarNavAccessibilityService connecté et actif.")
+        ensureDockRunning()
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        // Pas besoin de traiter les événements de contenu
+        // Au réveil de la voiture (lancement d'une app, changement de fenêtre), s'assurer que le dock est actif
+        ensureDockRunning()
+    }
+
+    private fun ensureDockRunning() {
+        try {
+            val prefs = getSharedPreferences(CarDockOverlayService.PREFS_NAME, Context.MODE_PRIVATE)
+            val isEnabled = prefs.getBoolean(CarDockOverlayService.PREF_DOCK_ENABLED, true)
+            if (isEnabled && !CarDockOverlayService.isServiceRunning && Settings.canDrawOverlays(this)) {
+                Log.d(TAG, "Relance automatique de CarDockOverlayService par le service d'accessibilité...")
+                val intent = Intent(this, CarDockOverlayService::class.java)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(intent)
+                } else {
+                    startService(intent)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Erreur ensureDockRunning: ${e.message}")
+        }
     }
 
     override fun onInterrupt() {

@@ -54,6 +54,7 @@ class MainActivity : AppCompatActivity() {
         const val STYLE_FLOATING = "floating"   // Îlot Flottant Mobile
 
         const val PREF_SHOW_RECENTS = "show_recents_button"
+        const val PREF_DOCK_ENABLED = "dock_service_enabled"
 
         const val PREF_INTEGRATION_MODE = "integration_mode"
         const val MODE_OPTION_A = "option_a" // Superposition
@@ -86,6 +87,11 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updatePermissionsStatus()
+        // Auto-démarrage immédiat dès l'ouverture si les permissions sont accordées
+        val isEnabled = prefs.getBoolean(PREF_DOCK_ENABLED, true)
+        if (isEnabled && Settings.canDrawOverlays(this) && !CarDockOverlayService.isServiceRunning) {
+            startDockService()
+        }
     }
 
     private fun initViews() {
@@ -183,7 +189,7 @@ class MainActivity : AppCompatActivity() {
         // 3. Style de Barre (Dédiée Tesla vs Îlot Flottant)
         rgDockStyle.setOnCheckedChangeListener { _, checkedId ->
             val newStyle = if (checkedId == R.id.radioStyleFloating) STYLE_FLOATING else STYLE_DEDICATED
-            prefs.edit().putString(PREF_DOCK_STYLE, newStyle).apply()
+            prefs.edit().putString(PREF_DOCK_STYLE, newStyle).commit()
             notifyDockConfigChanged()
             val label = if (newStyle == STYLE_DEDICATED) "Barre Dédiée Ancrée (Style Tesla)" else "Îlot Flottant Mobile"
             Toast.makeText(this, "Style choisi : $label", Toast.LENGTH_SHORT).show()
@@ -191,7 +197,7 @@ class MainActivity : AppCompatActivity() {
 
         // 4. Affichage du bouton Récents (Multitâche)
         switchShowRecents.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean(PREF_SHOW_RECENTS, isChecked).apply()
+            prefs.edit().putBoolean(PREF_SHOW_RECENTS, isChecked).commit()
             notifyDockConfigChanged()
             val msg = if (isChecked) "Bouton Récents activé" else "Bouton Récents masqué"
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
@@ -200,7 +206,7 @@ class MainActivity : AppCompatActivity() {
         // 5. Format du Menu (Horizontal vs Vertical)
         rgMenuOrientation.setOnCheckedChangeListener { _, checkedId ->
             val newOrient = if (checkedId == R.id.radioOrientVertical) ORIENT_VERTICAL else ORIENT_HORIZONTAL
-            prefs.edit().putString(PREF_DOCK_ORIENTATION, newOrient).apply()
+            prefs.edit().putString(PREF_DOCK_ORIENTATION, newOrient).commit()
             notifyDockConfigChanged()
             val label = if (newOrient == ORIENT_VERTICAL) "Vertical (Colonne)" else "Horizontal (Ligne)"
             Toast.makeText(this, "Format du menu : $label", Toast.LENGTH_SHORT).show()
@@ -214,7 +220,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.radioSizeXLarge -> SIZE_XLARGE
                 else -> SIZE_LARGE
             }
-            prefs.edit().putString(PREF_DOCK_SIZE, newSize).apply()
+            prefs.edit().putString(PREF_DOCK_SIZE, newSize).commit()
             notifyDockConfigChanged()
             val label = when (newSize) {
                 SIZE_COMPACT -> "Compact (Barre 56 dp)"
@@ -227,7 +233,7 @@ class MainActivity : AppCompatActivity() {
 
         // 5. Aimantation Intelligente (Snap to Edge)
         switchSnapToEdge.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean(PREF_SNAP_TO_EDGE, isChecked).apply()
+            prefs.edit().putBoolean(PREF_SNAP_TO_EDGE, isChecked).commit()
             notifyDockConfigChanged()
             val msg = if (isChecked) {
                 "Aimantation intelligente activée"
@@ -240,11 +246,11 @@ class MainActivity : AppCompatActivity() {
         // 6. Mode Intégration
         rgIntegrationMode.setOnCheckedChangeListener { _, checkedId ->
             if (checkedId == R.id.radioOptionA) {
-                prefs.edit().putString(PREF_INTEGRATION_MODE, MODE_OPTION_A).apply()
+                prefs.edit().putString(PREF_INTEGRATION_MODE, MODE_OPTION_A).commit()
                 DisplayResizeManager.applyOptionA()
                 Toast.makeText(this, "Option A activée : Superposition plein écran", Toast.LENGTH_SHORT).show()
             } else {
-                prefs.edit().putString(PREF_INTEGRATION_MODE, MODE_OPTION_B).apply()
+                prefs.edit().putString(PREF_INTEGRATION_MODE, MODE_OPTION_B).commit()
                 val density = resources.displayMetrics.density
                 val heightPx = (50 * density).toInt()
                 DisplayResizeManager.applyOptionB(this, heightPx)
@@ -258,12 +264,14 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Activez d'abord la permission de superposition !", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+            prefs.edit().putBoolean(PREF_DOCK_ENABLED, true).commit()
             startDockService()
-            Toast.makeText(this, "Barre activée !", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Barre activée (Démarrage auto actif)", Toast.LENGTH_SHORT).show()
         }
 
         // 7. Masquer la barre
         btnStopDock.setOnClickListener {
+            prefs.edit().putBoolean(PREF_DOCK_ENABLED, false).commit()
             val intent = Intent(this, CarDockOverlayService::class.java)
             stopService(intent)
             Toast.makeText(this, "Barre masquée", Toast.LENGTH_SHORT).show()

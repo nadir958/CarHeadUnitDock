@@ -8,8 +8,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.graphics.Color
@@ -21,6 +23,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -63,6 +66,17 @@ class CarDockOverlayService : Service() {
     private var initialTouchX = 0f
     private var initialTouchY = 0f
 
+    private val wakeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> {
+                    Log.d("CarDockOverlayService", "Écran allumé / contact voiture -> rafraîchissement dock")
+                    applyDockConfiguration()
+                }
+            }
+        }
+    }
+
     companion object {
         const val CHANNEL_ID = "car_dock_service_channel"
         const val NOTIFICATION_ID = 1001
@@ -75,6 +89,7 @@ class CarDockOverlayService : Service() {
         const val STYLE_FLOATING = "floating"   // Îlot Flottant Mobile
 
         const val PREF_SHOW_RECENTS = "show_recents_button"
+        const val PREF_DOCK_ENABLED = "dock_service_enabled"
 
         const val PREF_DOCK_ORIENTATION = "dock_orientation"
         const val ORIENT_HORIZONTAL = "horizontal"
@@ -115,6 +130,12 @@ class CarDockOverlayService : Service() {
 
         startAsForeground()
         createFloatingDockWindow()
+
+        val wakeFilter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_USER_PRESENT)
+        }
+        registerReceiver(wakeReceiver, wakeFilter)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -662,7 +683,7 @@ class CarDockOverlayService : Service() {
                         prefs.edit()
                             .putInt(PREF_POS_X, layoutParams.x)
                             .putInt(PREF_POS_Y, layoutParams.y)
-                            .apply()
+                            .commit()
                     }
                     true
                 }
@@ -731,7 +752,7 @@ class CarDockOverlayService : Service() {
             if (dockView != null && dockView!!.isAttachedToWindow) {
                 windowManager.updateViewLayout(dockView, layoutParams)
             }
-            prefs.edit().putInt(PREF_POS_X, targetX).putInt(PREF_POS_Y, targetY).apply()
+            prefs.edit().putInt(PREF_POS_X, targetX).putInt(PREF_POS_Y, targetY).commit()
             return
         }
 
@@ -744,7 +765,7 @@ class CarDockOverlayService : Service() {
         val startY = layoutParams.y
 
         if (startX == targetX && startY == targetY) {
-            prefs.edit().putInt(PREF_POS_X, targetX).putInt(PREF_POS_Y, targetY).apply()
+            prefs.edit().putInt(PREF_POS_X, targetX).putInt(PREF_POS_Y, targetY).commit()
             return
         }
 
@@ -761,7 +782,7 @@ class CarDockOverlayService : Service() {
             }
             addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) {
-                    prefs.edit().putInt(PREF_POS_X, targetX).putInt(PREF_POS_Y, targetY).apply()
+                    prefs.edit().putInt(PREF_POS_X, targetX).putInt(PREF_POS_Y, targetY).commit()
                 }
             })
             start()
@@ -892,6 +913,11 @@ class CarDockOverlayService : Service() {
         super.onDestroy()
         isServiceRunning = false
         snapAnimator?.cancel()
+        try {
+            unregisterReceiver(wakeReceiver)
+        } catch (e: Exception) {
+            // Ignore if already unregistered
+        }
         DisplayResizeManager.resetInsets()
         dockView?.let {
             try {

@@ -57,12 +57,22 @@
             android:name=".BootReceiver"
             android:enabled="true"
             android:exported="true">
-            <intent-filter android:priority="999">
+            <intent-filter android:priority="1000">
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.USER_PRESENT" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="android.intent.action.SCREEN_ON" />
+                <!-- Automotive HeadUnit specific ACC ON / Wake up broadcasts -->
+                <action android:name="com.microntek.acc_on" />
+                <action android:name="com.microntek.bootcheck" />
+                <action android:name="com.syu.action.ACC_ON" />
+                <action android:name="com.syu.canbus.acc_on" />
+                <action android:name="com.fyt.action.ACC_ON" />
+                <action android:name="com.allwinner.action.ACC_ON" />
+                <action android:name="com.ts.main.acc_on" />
+                <action android:name="android.car.action.CAR_POWER_STATE_CHANGED" />
             </intent-filter>
         </receiver>
 

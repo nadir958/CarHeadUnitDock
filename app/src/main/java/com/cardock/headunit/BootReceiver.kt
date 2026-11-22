@@ -13,19 +13,25 @@ class BootReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        Log.d(TAG, "Événement de démarrage détecté : ${intent.action}")
+        Log.d(TAG, "Événement de démarrage / réveil détecté : ${intent.action}")
 
-        // Vérifier si l'autorisation d'overlay est accordée
-        if (Settings.canDrawOverlays(context)) {
+        val prefs = context.getSharedPreferences(CarDockOverlayService.PREFS_NAME, Context.MODE_PRIVATE)
+        val isEnabled = prefs.getBoolean(CarDockOverlayService.PREF_DOCK_ENABLED, true)
+
+        if (isEnabled && Settings.canDrawOverlays(context)) {
             val serviceIntent = Intent(context, CarDockOverlayService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(serviceIntent)
-            } else {
-                context.startService(serviceIntent)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(serviceIntent)
+                } else {
+                    context.startService(serviceIntent)
+                }
+                Log.d(TAG, "CarDockOverlayService démarré avec succès au boot / réveil de la voiture.")
+            } catch (e: Exception) {
+                Log.e(TAG, "Erreur au démarrage du service : ${e.message}")
             }
-            Log.d(TAG, "CarDockOverlayService démarré avec succès au boot de la voiture.")
         } else {
-            Log.w(TAG, "Impossible de démarrer la barre : permission SYSTEM_ALERT_WINDOW manquante.")
+            Log.w(TAG, "Démarrage automatique ignoré : activé=$isEnabled, overlay=${Settings.canDrawOverlays(context)}")
         }
     }
 }
